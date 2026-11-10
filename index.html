@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Авито-Финдер · Сыктывкар</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1220">
+<style>
+  :root{
+    --bg:#0f1220; --card:#181c2e; --card2:#1f2438; --line:#2b3149;
+    --text:#e9edfb; --muted:#98a0bd; --accent:#5ee08a; --warn:#ffb84d; --bad:#ff6b6b; --blue:#6ea8ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,Segoe UI,Roboto,Arial,sans-serif;padding-bottom:80px}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#0f1220 70%,rgba(15,18,32,.92));border-bottom:1px solid var(--line);padding:12px 14px 10px}
+  h1{font-size:17px;margin:0 0 2px}
+  .sub{color:var(--muted);font-size:12px}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .controls .wide{grid-column:1 / -1}
+  select,input[type=number],input[type=search]{
+    width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);
+    border-radius:10px;padding:9px 10px;font-size:14px;outline:none
+  }
+  .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{white-space:nowrap;background:var(--card2);border:1px solid var(--line);color:var(--muted);
+    padding:7px 12px;border-radius:999px;font-size:13px;cursor:pointer}
+  .chip.on{background:rgba(94,224,138,.14);border-color:rgba(94,224,138,.5);color:var(--accent)}
+  .toggles{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  label.t{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);
+    background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer}
+  label.t input{accent-color:var(--accent)}
+  .stats{color:var(--muted);font-size:12px;margin-top:8px}
+  main{padding:12px 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  .thumb{aspect-ratio:1/1;background:#0b0e18 center/cover no-repeat;position:relative;display:flex;align-items:center;justify-content:center;color:#3a4160;font-size:12px}
+  .badge{position:absolute;top:8px;left:8px;background:rgba(10,12,20,.82);border-radius:8px;padding:3px 7px;font-size:12px;font-weight:600}
+  .badge.good{color:var(--accent)} .badge.mid{color:var(--warn)} .badge.bad{color:var(--bad)}
+  .body{padding:9px 10px 11px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .title{font-size:13px;line-height:1.3;max-height:3.4em;overflow:hidden}
+  .meta{display:flex;gap:5px;flex-wrap:wrap}
+  .tag{font-size:11px;color:var(--muted);background:#141828;border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+  .tag.fake{color:var(--warn);border-color:rgba(255,184,77,.35)}
+  .price{font-size:16px;font-weight:700;margin-top:auto}
+  .est{font-size:11px;color:var(--muted)}
+  .est b{color:var(--text);font-weight:600}
+  a.cardlink{color:inherit;text-decoration:none}
+  .empty{color:var(--muted);text-align:center;padding:40px 10px}
+  footer{position:fixed;bottom:0;left:0;right:0;background:rgba(15,18,32,.95);border-top:1px solid var(--line);
+    padding:8px 14px;font-size:11px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>Авито-Финдер <span class="sub" id="city">Сыктывкар</span></h1>
+  <div class="sub" id="updated">загрузка…</div>
+
+  <div class="controls">
+    <input class="wide" id="q" type="search" placeholder="Поиск по названию (например, stone island)">
+    <select id="cat"></select>
+    <select id="brand"></select>
+    <select id="size"></select>
+    <select id="sort">
+      <option value="discount">Сначала выгодные</option>
+      <option value="price">Сначала дешёвые</option>
+      <option value="profit">Сначала прибыльные</option>
+      <option value="new">Сначала новые</option>
+    </select>
+    <input id="pmin" type="number" placeholder="Цена от" value="1000">
+    <input id="pmax" type="number" placeholder="Цена до" value="20000">
+  </div>
+
+  <div class="chips" id="typeChips">
+    <div class="chip on" data-type="all">Все</div>
+    <div class="chip" data-type="orig">Оригинал</div>
+    <div class="chip" data-type="fake">Паль</div>
+  </div>
+
+  <div class="toggles">
+    <label class="t"><input type="checkbox" id="photoOnly" checked> только с фото</label>
+    <label class="t"><input type="checkbox" id="newOnly"> только новое</label>
+  </div>
+
+  <div class="stats" id="stats"></div>
+</header>
+
+<main><div class="grid" id="grid"></div><div class="empty" id="empty" hidden>Ничего не найдено — ослабь фильтры</div></main>
+
+<footer>Оценка рынка — медиана цен похожих объявлений. Не оферта, перепроверяй вручную.</footer>
+
+<script>
+const state = {data:null, type:'all'};
+
+const $ = id => document.getElementById(id);
+
+function median(a){ if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y); const m=s.length>>1;
+  return s.length%2 ? s[m] : (s[m-1]+s[m])/2; }
+
+// ---------- "неиронка": статистическая оценка рынка ----------
+function buildModel(items){
+  const byKey = new Map();   // cat|brand|type -> prices
+  const byCat = new Map();   // cat -> prices
+  const all = [];
+  for(const it of items){
+    const type = it.fake ? 'fake' : 'orig';
+    const k1 = `${it.category}|${it.brand}|${type}`;
+    const k2 = `${it.category}|${type}`;
+    if(!byKey.has(k1)) byKey.set(k1, []);
+    byKey.get(k1).push(it.price);
+    if(!byCat.has(k2)) byCat.set(k2, []);
+    byCat.get(k2).push(it.price);
+    all.push(it.price);
+  }
+  return {byKey, byCat, allMedian: median(all)};
+}
+
+function estimateMarket(item, model){
+  const type = item.fake ? 'fake' : 'orig';
+  const k1 = `${item.category}|${item.brand}|${type}`;
+  const k2 = `${item.category}|${type}`;
+  const g1 = model.byKey.get(k1) || [];
+  let est, basis;
+  if(g1.length >= 3){ est = median(g1); basis = `по ${g1.length} похожим (${type})`; }
+  else {
+    const g2 = model.byCat.get(k2) || [];
+    if(g2.length >= 3){ est = median(g2); basis = `по категории (${type})`; }
+    else { est = model.allMedian * (item.fake ? 0.6 : 1); basis = 'по всему рынку'; }
+  }
+  // скидка к рынку
+  const discount = est > 0 ? 1 - item.price / est : 0;
+  // сколько останется при перепродаже: берём 80% медианы (торг) минус 5% на продвижение
+  const resale = est * 0.80 * 0.95;
+  const profit = Math.round(resale - item.price);
+  const score = Math.round(Math.max(0, Math.min(1, discount)) * 100);
+  return {market: Math.round(est), discount, profit, score, basis};
+}
+
+// ---------- рендер ----------
+function fillSelect(el, values, placeholder, current){
+  el.innerHTML = '';
+  const o = document.createElement('option'); o.value=''; o.textContent=placeholder; el.appendChild(o);
+  for(const v of values){ const x=document.createElement('option'); x.value=v; x.textContent=v; el.appendChild(x); }
+  el.value = current || '';
+}
+
+function fmt(n){ return n.toLocaleString('ru-RU') + ' ₽'; }
+
+function applyFilters(){
+  if(!state.data) return;
+  const items = state.data.items;
+  const q = $('q').value.trim().toLowerCase();
+  const cat = $('cat').value, brand = $('brand').value, size = $('size').value;
+  const pmin = +$('pmin').value || 0, pmax = +$('pmax').value || Infinity;
+  const photoOnly = $('photoOnly').checked, newOnly = $('newOnly').checked;
+
+  const model = state.model;
+  let list = items.map(it => ({...it, est: estimateMarket(it, model)}));
+
+  list = list.filter(it => {
+    if(q && !(it.title.toLowerCase().includes(q) || it.brand.toLowerCase().includes(q))) return false;
+    if(cat && it.category !== cat) return false;
+    if(brand && it.brand !== brand) return false;
+    if(size && it.size !== size) return false;
+    if(it.price < pmin || it.price > pmax) return false;
+    if(photoOnly && !it.img) return false;
+    if(newOnly && it.condition !== 'new') return false;
+    if(state.type === 'fake' && !it.fake) return false;
+    if(state.type === 'orig' && it.fake) return false;
+    return true;
+  });
+
+  const sort = $('sort').value;
+  list.sort((a,b) => {
+    if(sort === 'price') return a.price - b.price;
+    if(sort === 'profit') return b.est.profit - a.est.profit;
+    if(sort === 'new') return (b.date||'').localeCompare(a.date||'');
+    return b.est.score - a.est.score;
+  });
+
+  render(list);
+  const good = list.filter(i => i.est.discount >= 0.4).length;
+  $('stats').textContent = `Найдено: ${list.length} · выгодных (≥40% к рынку): ${good} · медиана рынка: ${fmt(Math.round(model.allMedian))}`;
+  $('empty').hidden = list.length > 0;
+}
+
+function render(list){
+  const grid = $('grid');
+  grid.innerHTML = '';
+  for(const it of list){
+    const d = Math.round(it.est.discount * 100);
+    const cls = d >= 40 ? 'good' : d >= 20 ? 'mid' : 'bad';
+    const card = document.createElement('a');
+    card.className = 'cardlink';
+    card.href = it.url || '#';
+    card.target = '_blank'; card.rel = 'noopener';
+    card.innerHTML = `
+      <div class="card">
+        <div class="thumb" style="${it.img ? `background-image:url('${it.img}')` : ''}">
+          ${it.img ? '' : 'без фото'}
+          <div class="badge ${cls}">${d >= 0 ? '−' : '+'}${Math.abs(d)}% к рынку</div>
+        </div>
+        <div class="body">
+          <div class="title">${it.title}</div>
+          <div class="meta">
+            <span class="tag">${it.brand}</span>
+            ${it.size ? `<span class="tag">${it.size}</span>` : ''}
+            ${it.fake ? '<span class="tag fake">паль</span>' : ''}
+            ${it.condition === 'new' ? '<span class="tag">новое</span>' : ''}
+          </div>
+          <div class="price">${fmt(it.price)}</div>
+          <div class="est">рынок ≈ <b>${fmt(it.est.market)}</b><br>
+            прибыль: <b style="color:${it.est.profit > 0 ? 'var(--accent)' : 'var(--bad)'}">${it.est.profit > 0 ? '+' : ''}${fmt(it.est.profit)}</b><br>
+            <span style="opacity:.7">${it.est.basis}</span></div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  }
+}
+
+async function boot(){
+  const resp = await fetch('data.json', {cache:'no-store'});
+  const data = await resp.json();
+  state.data = data;
+  state.model = buildModel(data.items);
+  $('city').textContent = data.city || '';
+  const dt = new Date(data.updated);
+  $('updated').textContent = `обновлено: ${dt.toLocaleString('ru-RU')} · ${data.items.length} объявлений`;
+
+  const uniq = k => [...new Set(data.items.map(i => i[k]).filter(Boolean))].sort();
+  fillSelect($('cat'), uniq('category'), 'Все категории');
+  fillSelect($('brand'), uniq('brand'), 'Все бренды');
+  fillSelect($('size'), uniq('size'), 'Все размеры');
+
+  for(const el of ['q','cat','brand','size','sort','pmin','pmax','photoOnly','newOnly'])
+    $(el).addEventListener('input', applyFilters);
+
+  document.querySelectorAll('#typeChips .chip').forEach(ch => ch.addEventListener('click', () => {
+    document.querySelectorAll('#typeChips .chip').forEach(c => c.classList.remove('on'));
+    ch.classList.add('on'); state.type = ch.dataset.type; applyFilters();
+  }));
+
+  applyFilters();
+}
+
+boot();
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>
