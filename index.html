@@ -119,6 +119,7 @@ const state = {data:null, type:'all'};
 const $ = id => document.getElementById(id);
 
 /* ---------------- доступ: серверный триал (Cloudflare Worker) ---------------- */
+const BUILD = 'v6';
 const WORKER = 'https://avito-finder-trial.artemfromkomi024.workers.dev';
 const LS_DEV = 'avito_device';
 const LS_STATE = 'avito_state_v2';
@@ -139,7 +140,7 @@ async function api(path, body) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body)
   } : {});
-  if (!res.ok) throw new Error('http ' + res.status);
+  if (!res.ok) { const e = new Error('http ' + res.status); e.status = res.status; throw e; }
   return res.json();
 }
 
@@ -164,25 +165,20 @@ async function resolveAccess() {
   }
 }
 
+/** 'ok' | 'bad' | 'offline' */
 async function submitCode(raw) {
   const code = (raw || '').trim().toUpperCase();
-  if (!code) return false;
+  if (!code) return 'bad';
   let r;
   try {
     r = await api('/redeem', { device: deviceId(), code: code });
   } catch (e) {
-    return false;               // 403 — код неверный, и клиент о кодах ничего не знает
+    if (e.status === 403) return 'bad';
+    return 'offline';
   }
-  if (r.permanent) { cacheState({ permanent: true }); return true; }
-  if (r.leftMs > 0) { cacheState({ leftMs: r.leftMs }); return true; }
-  return false;
-}
-
-function fmtLeft(ms) {
-  const d = Math.floor(ms / DAY);
-  const h = Math.floor((ms % DAY) / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  return (d ? d + ' д ' : '') + h + ' ч ' + m + ' мин';
+  if (r.permanent) { cacheState({ permanent: true }); return 'ok'; }
+  if (r.leftMs > 0) { cacheState({ leftMs: r.leftMs }); return 'ok'; }
+  return 'bad';
 }
 
 function showTrialBanner(leftMs) {
@@ -207,24 +203,22 @@ function showGate(reason) {
   gate.hidden = false;
   if (reason === 'expired') {
     $('gateTitle').textContent = 'Доступ истёк';
-    $('gateText').textContent = 'Срок доступа закончился. Напиши владельцу приложения, чтобы продлить.';
+    $('gateText').textContent = 'Срок доступа закончился. Введи новый код от владельца приложения.';
   } else if (reason === 'offline') {
     $('gateTitle').textContent = 'Нет связи с сервером';
-    $('gateText').textContent = 'Проверь интернет и обнови страницу. Если не помогло — напиши владельцу.';
+    $('gateText').textContent = 'Проверь интернет и обнови страницу. Если не помогает — сервер недоступен из твоей сети.';
+    $('gateErr').textContent = 'сборка ' + BUILD;
   }
   const submit = async () => {
-    $('gateErr').textContent = '';
+    $('gateErr').textContent = 'проверяю…';
     const btn = $('gateBtn');
     btn.disabled = true;
     try {
-      if (await submitCode($('gateInput').value)) {
-        gate.hidden = true;
-        start();
-      } else {
-        $('gateErr').textContent = 'Код не подходит';
-      }
-    } catch (e) {
-      $('gateErr').textContent = 'Нет связи с сервером';
+      const res = await submitCode($('gateInput').value);
+      if (res === 'ok') { gate.hidden = true; start(); return; }
+      $('gateErr').textContent = res === 'offline'
+        ? 'Нет связи с сервером (код не проверен). Сборка ' + BUILD
+        : 'Код не подходит или уже использован. Сборка ' + BUILD;
     } finally {
       btn.disabled = false;
     }
@@ -238,16 +232,18 @@ async function start() {
   const code = url.searchParams.get('code');
   if (code) {
     try {
-      if (await submitCode(code)) {
+      if (await submitCode(code) === 'ok') {
         url.searchParams.delete('code');
         history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
       }
-    } catch (e) { /* нет сети — ниже покажем состояние */ }
+    } catch (e) { /* ниже покажем состояние */ }
   }
   const acc = await resolveAccess();
   if (!acc.ok) { showGate(acc.reason); return; }
   if (acc.leftMs) showTrialBanner(acc.leftMs);
   boot();
+  const f = document.querySelector('footer');
+  if (f && !f.textContent.includes('сборка')) f.textContent += ' · сборка ' + BUILD;
 }
 
 function median(a){ if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y); const m=s.length>>1;
@@ -401,7 +397,7 @@ async function boot(){
 }
 
 start();
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(()=>{}); }
 </script>
 </body>
 </html>
