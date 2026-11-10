@@ -204,8 +204,8 @@ function showGate(reason) {
   const gate = $('gate');
   gate.hidden = false;
   if (reason === 'expired') {
-    $('gateTitle').textContent = 'Пробный период закончился';
-    $('gateText').textContent = 'Трёхдневный доступ истёк. Напиши владельцу приложения, чтобы продлить.';
+    $('gateTitle').textContent = 'Доступ истёк';
+    $('gateText').textContent = 'Срок доступа закончился. Напиши владельцу приложения, чтобы продлить.';
   } else if (reason === 'offline') {
     $('gateTitle').textContent = 'Нет связи с сервером';
     $('gateText').textContent = 'Проверь интернет и обнови страницу. Если не помогло — напиши владельцу.';
