@@ -106,10 +106,12 @@ const DATA = {"city": "Сыктывкар", "updated": "2026-11-10T18:50:17", "s
 /* ---------------- три пробные ссылки: 3 дня с первого открытия ---------------- */
 const TRIALS = { s1: 3, s2: 3, s3: 3, owner: 0 };  // 0 = бессрочно
 const LS = 'trial_';
+const FIXED_TOKEN = '';
 const DAY = 86400000;
 
 function currentToken() {
-  try { return new URL(location.href).searchParams.get('t') || ''; } catch (e) { return ''; }
+  try { return (new URL(location.href).searchParams.get('t') || FIXED_TOKEN || '').toLowerCase(); }
+  catch (e) { return String(FIXED_TOKEN || '').toLowerCase(); }
 }
 
 function activateToken(token) {
