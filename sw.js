@@ -1,4 +1,4 @@
-const CACHE = 'avito-finder-v2';
+const CACHE = 'avito-finder-v3';
 const ASSETS = ['./index.html', './data.json', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', e => {
@@ -12,17 +12,25 @@ self.addEventListener('activate', e => {
   );
 });
 
+// сеть в приоритете: так обновления приложения доезжают сразу
+function networkFirst(request) {
+  return fetch(request)
+    .then(res => {
+      const copy = res.clone();
+      caches.open(CACHE).then(c => c.put(request, copy));
+      return res;
+    })
+    .catch(() => caches.match(request));
+}
+
 self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  if (url.pathname.endsWith('data.json')) {
-    e.respondWith(
-      fetch(e.request).then(r => {
-        const copy = r.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy));
-        return r;
-      }).catch(() => caches.match(e.request))
-    );
+  const req = e.request;
+  const url = new URL(req.url);
+
+  if (req.mode === 'navigate' || url.pathname.endsWith('index.html') || url.pathname.endsWith('data.json')) {
+    e.respondWith(networkFirst(req));
     return;
   }
-  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+
+  e.respondWith(caches.match(req).then(r => r || fetch(req)));
 });
