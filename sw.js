@@ -1,4 +1,4 @@
-const CACHE = 'avito-finder-v1';
+const CACHE = 'avito-finder-v2';
 const ASSETS = ['./index.html', './data.json', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', e => {
