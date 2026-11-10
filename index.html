@@ -3,40 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Авито-Финдер · Сыктывкар</title>
-<link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0f1220">
+<title>Авито-Финдер · Сыктывкар</title>
 <style>
-  :root{
-    --bg:#0f1220; --card:#181c2e; --card2:#1f2438; --line:#2b3149;
-    --text:#e9edfb; --muted:#98a0bd; --accent:#5ee08a; --warn:#ffb84d; --bad:#ff6b6b; --blue:#6ea8ff;
-  }
+  :root{--bg:#0f1220;--card:#181c2e;--card2:#1f2438;--line:#2b3149;--text:#e9edfb;--muted:#98a0bd;
+        --accent:#5ee08a;--warn:#ffb84d;--bad:#ff6b6b}
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,Segoe UI,Roboto,Arial,sans-serif;padding-bottom:80px}
-  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#0f1220 70%,rgba(15,18,32,.92));border-bottom:1px solid var(--line);padding:12px 14px 10px}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,Segoe UI,Roboto,Arial,sans-serif;padding-bottom:70px}
+  header{position:sticky;top:0;z-index:10;background:#0f1220;border-bottom:1px solid var(--line);padding:12px 14px 10px}
   h1{font-size:17px;margin:0 0 2px}
-  .sub{color:var(--muted);font-size:12px}
+  .muted{color:var(--muted);font-size:12px}
   .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-  .controls .wide{grid-column:1 / -1}
-  select,input[type=number],input[type=search]{
-    width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);
-    border-radius:10px;padding:9px 10px;font-size:14px;outline:none
-  }
-  .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+  .controls .wide{grid-column:1/-1}
+  select,input{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);
+               border-radius:10px;padding:9px 10px;font-size:14px;outline:none}
+  .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px}
   .chips::-webkit-scrollbar{display:none}
   .chip{white-space:nowrap;background:var(--card2);border:1px solid var(--line);color:var(--muted);
-    padding:7px 12px;border-radius:999px;font-size:13px;cursor:pointer}
+        padding:7px 12px;border-radius:999px;font-size:13px;cursor:pointer}
   .chip.on{background:rgba(94,224,138,.14);border-color:rgba(94,224,138,.5);color:var(--accent)}
-  .toggles{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-  label.t{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);
-    background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer}
-  label.t input{accent-color:var(--accent)}
-  .stats{color:var(--muted);font-size:12px;margin-top:8px}
+  .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .toggle{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);
+          background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer}
+  .toggle input{accent-color:var(--accent);width:auto}
+  #stats{color:var(--muted);font-size:12px;margin-top:8px}
   main{padding:12px 14px}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
-  .thumb{aspect-ratio:1/1;background:#0b0e18 center/cover no-repeat;position:relative;display:flex;align-items:center;justify-content:center;color:#3a4160;font-size:12px}
-  .badge{position:absolute;top:8px;left:8px;background:rgba(10,12,20,.82);border-radius:8px;padding:3px 7px;font-size:12px;font-weight:600}
+  .thumb{aspect-ratio:1/1;background:#0b0e18 center/cover no-repeat;position:relative;display:flex;
+         align-items:center;justify-content:center;color:#3a4160;font-size:12px}
+  .badge{position:absolute;top:8px;left:8px;background:rgba(10,12,20,.85);border-radius:8px;padding:3px 7px;font-size:12px;font-weight:600}
   .badge.good{color:var(--accent)} .badge.mid{color:var(--warn)} .badge.bad{color:var(--bad)}
   .body{padding:9px 10px 11px;display:flex;flex-direction:column;gap:6px;flex:1}
   .title{font-size:13px;line-height:1.3;max-height:3.4em;overflow:hidden}
@@ -46,40 +42,31 @@
   .price{font-size:16px;font-weight:700;margin-top:auto}
   .est{font-size:11px;color:var(--muted)}
   .est b{color:var(--text);font-weight:600}
-  a.cardlink{color:inherit;text-decoration:none}
+  a{color:inherit;text-decoration:none}
   .empty{color:var(--muted);text-align:center;padding:40px 10px}
-  footer{position:fixed;bottom:0;left:0;right:0;background:rgba(15,18,32,.95);border-top:1px solid var(--line);
-    padding:8px 14px;font-size:11px;color:var(--muted);text-align:center}
-  .trial-badge{position:fixed;top:10px;right:12px;z-index:60;background:rgba(31,58,42,.95);color:#bff3d0;border:1px solid #2f5a41;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.35)}
-  .trial-badge.warn{background:rgba(58,47,31,.95);color:#ffd79a;border-color:#5a462f}
-  .gate{position:fixed;inset:0;z-index:100;background:radial-gradient(1200px 600px at 50% -10%,#1b2238,#0b0e18 70%);
-    display:flex;align-items:center;justify-content:center;padding:22px}
-  .gate-card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:18px;
-    padding:22px 20px;text-align:center}
-  .gate-card h2{margin:0 0 8px;font-size:19px}
-  .gate-card p{margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.5}
-  .gate-card input{text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
-  .gate-card button{width:100%;padding:11px;border:0;border-radius:12px;background:var(--accent);color:#07130c;
-    font-weight:700;font-size:15px;cursor:pointer}
-  .gate-err{color:var(--bad);font-size:12px;min-height:16px;margin-top:6px}
+  footer{position:fixed;bottom:0;left:0;right:0;background:#0f1220;border-top:1px solid var(--line);
+         padding:8px 14px;font-size:11px;color:var(--muted);text-align:center}
+  .lock{position:fixed;inset:0;z-index:100;background:#0b0e18;display:flex;align-items:center;justify-content:center;padding:20px}
+  .lock-card{max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;text-align:center}
+  .lock-card h2{margin:0 0 10px;font-size:18px}
+  .lock-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
 </style>
 </head>
 <body>
-<div id="trialBanner" class="trial-badge" hidden></div>
 <header>
-  <h1>Авито-Финдер <span class="sub" id="city">Сыктывкар</span></h1>
-  <div class="sub" id="updated">загрузка…</div>
+  <h1>Авито-Финдер <span class="muted" id="city"></span></h1>
+  <div class="muted" id="updated"></div>
 
   <div class="controls">
-    <input class="wide" id="q" type="search" placeholder="Поиск по названию (например, stone island)">
-    <select id="cat"></select>
-    <select id="brand"></select>
-    <select id="size"></select>
+    <input class="wide" id="q" type="search" placeholder="Поиск: бренд, вещь, слово">
+    <select id="city"><option value="">Все города</option></select>
+    <select id="cat"><option value="">Все категории</option></select>
+    <select id="brand"><option value="">Все бренды</option></select>
+    <select id="size"><option value="">Все размеры</option></select>
     <select id="sort">
       <option value="discount">Сначала выгодные</option>
       <option value="price">Сначала дешёвые</option>
       <option value="profit">Сначала прибыльные</option>
-      <option value="new">Сначала новые</option>
     </select>
     <input id="pmin" type="number" placeholder="Цена от" value="1000">
     <input id="pmax" type="number" placeholder="Цена до" value="20000">
@@ -91,205 +78,262 @@
     <div class="chip" data-type="fake">Паль</div>
   </div>
 
-  <div class="toggles">
-    <label class="t"><input type="checkbox" id="photoOnly" checked> только с фото</label>
-    <label class="t"><input type="checkbox" id="newOnly"> только новое</label>
+  <div class="row">
+    <label class="toggle"><input type="checkbox" id="photoOnly" checked> только с фото</label>
+    <label class="toggle"><input type="checkbox" id="newOnly"> только новое</label>
   </div>
 
-  <div class="stats" id="stats"></div>
+  <div id="stats"></div>
 </header>
 
-<main><div class="grid" id="grid"></div><div class="empty" id="empty" hidden>Ничего не найдено — ослабь фильтры</div></main>
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>Ничего не найдено — ослабь фильтры</div>
+</main>
 
-<footer>Оценка рынка — медиана цен похожих объявлений. Не оферта, перепроверяй вручную.</footer>
-
-<div id="gate" class="gate" hidden>
-  <div class="gate-card">
-    <h2 id="gateTitle">Доступ по коду</h2>
-    <p id="gateText">Введи код, который дал владелец приложения.</p>
-    <input id="gateInput" type="text" placeholder="КОД" autocomplete="off">
-    <button id="gateBtn">Войти</button>
-    <div class="gate-err" id="gateErr"></div>
+<div id="lock" class="lock" hidden>
+  <div class="lock-card">
+    <h2>Нет доступа</h2>
+    <p>Попроси у владельца персональную ссылку — она даёт 3 дня работы.</p>
   </div>
 </div>
 
+<footer>Оценка рынка — медиана похожих объявлений. Обновляется 3 раза в день.</footer>
+
 <script>
-const state = {data:null, type:'all'};
+const DATA = {"city": "Сыктывкар", "updated": "2026-11-10T18:50:17", "source": "avito.ru", "items": [{"id": "avito-4830838291", "title": "Продам шорты новые. 80-82 размер", "price": 1000, "brand": "NoName", "category": "шорты", "size": "80-82", "condition": "new", "fake": true, "img": "https://c90.img.avito.st/image/1/1.p_IeDLaACxsIrKkaXAqmrj6sCR-suw8brNxqH6wPCrmrrw8BCKypGqg.v40JR1M7YMORr9iVwHxmJiOjEKpFl9j9Pgr81xkKGlE", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/prodam_shorty_novye._80-82_razmer_8118689353?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-6828057814", "title": "Кожаные шорты", "price": 1000, "brand": "NoName", "category": "шорты", "size": "", "condition": "new", "fake": true, "img": "https://00.img.avito.st/image/1/1.g49jYraAL2Z1wo1naRiUwW3CLWLR1Stm0bJOYtFhLsTWwSt8dcKNZ9U.-Cm40Ig6kxI_aPq3oKZ7qlUm3zdVcVgpLuiOlmxbE60?cqp=2.2LhnDdKx1gU5sZ7QAbwhSdJoeYt5K_KL9JwGcCXpGrDVbBxJ1yJf9Jn7hY3rGWaiHtSha9zz1w==", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/kozhanye_shorty_8473590108?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "7 дней назад", "city": "Сыктывкар"}, {"id": "avito-1600103428", "title": "Шорты Черные Ed Hardy Tiger На Руках", "price": 1000, "brand": "Ed Hardy", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "https://20.img.avito.st/image/1/1.eA0VGraA1OQDunblaVNoAQy61uCnrdDkp8q14KcZ1UagudD-A7p25aM.cRBTeJAy-Hk3jl004WvX38DfckRVsgbALEOeWxjMoj4?cqp=2.2LhnDdKx1gU5sZ7QAbwhSdJoeYt5K_KL9JwGcCXpGrDVbBxJ1yJf9Jn7hY3rGWaiHtSha9zz1w==", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_chernye_ed_hardy_tiger_na_rukah_8493569172?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-765216444", "title": "Шорты", "price": 1000, "brand": "NoName", "category": "шорты", "size": "", "condition": "new", "fake": true, "img": "https://c90.img.avito.st/image/1/1.8SxqUraBXcV88v_EBAnZc9HxWcPI913Dr5JZw3zy_8Tc90dn31Fcxw.yM7j6QWFjMGqUvamRSe7NasTRKHYSBCPiHqqTBHL0p8", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_608941371?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2084787402", "title": "Шорты мужские размер 6XL", "price": 1000, "brand": "NoName", "category": "шорты", "size": "", "condition": "new", "fake": true, "img": "https://20.img.avito.st/image/1/1.NMoYnLaBmCMOPDoifOQQkqM_nCW6OZgl3VycJQ48OiKuOYKBrZ-ZIQ.KAapgZntYwHa1uQ2HhcUzaL7nqfKfT9wDh7v7eFgNCU?cqp=2.2LhnDdKx1gU5sZ7QAbwhSdJoeYt5K_KL9JwGcCXpGrDVbBxJ1yJf9Jn7hY3rGWaiHtSha9zz1w==", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_muzhskie_razmer_6xl_608643350?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-5159459542", "title": "Шорты мужские лен хлопок Nanameel 56-58", "price": 1000, "brand": "Nanameel", "category": "шорты", "size": "56-58", "condition": "new", "fake": false, "img": "https://30.img.avito.st/image/1/1.DmA5NLaAookvlACIKUxVPWKVoI2Lg6aJi-TDjYs3oyuMl6aTL5QAiI8.k2eZ_kuuC5wAAIHjj8DPMbu3EA9MN3hNEmD6B8xE-zE?cqp=2.2LhnDdKx1gU5sZ7QAbwhSdJoeYt5K_KL9JwGcCXpGrDVbBxJ1yJf9Jn7hY3rGWaiHtSha9zz1w==", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_muzhskie_len_hlopok_nanameel_56-58_8378442086?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-1293307225", "title": "Шорты Tommy Hilfiger", "price": 1020, "brand": "Tommy Hilfiger", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "https://80.img.avito.st/image/1/1.vKB5ubaAEElvGbJIDafvuG0ZEk3LDhRJy2lxTcu6EevMGhRTbxmySM8.ydNu0oiH56oGAzvaTZ_Dx9Bb4qR5w432yUV1JzmH6tE", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_tommy_hilfiger_8208737714?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-848754147", "title": "Шорты Adidas", "price": 1020, "brand": "Adidas", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_adidas_8208642578?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-9298178609", "title": "Шорты Blue Motion Германия", "price": 1100, "brand": "Blue Motion", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_blue_motion_germaniya_8169088298?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-3512249254", "title": "Шорты новые мужские Weekday 29(44-46)", "price": 1100, "brand": "Weekday", "category": "шорты", "size": "44-46", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_novye_muzhskie_weekday_2944-46_7676926317?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-9382597690", "title": "Новые мужские шорты Weekday 29(44)", "price": 1100, "brand": "Weekday", "category": "шорты", "size": "44", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/novye_muzhskie_shorty_weekday_2944_4188812449?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-8316226366", "title": "Шорты Nike FC Barcelona", "price": 1105, "brand": "Nike", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_nike_fc_barcelona_8208739993?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-5862566461", "title": "Оригинальные мужские шорты Demix 60-62", "price": 1153, "brand": "Demix", "category": "шорты", "size": "60-62", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/originalnye_muzhskie_shorty_demix_60-62_7829206538?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-671535512", "title": "Шорты", "price": 1200, "brand": "NoName", "category": "шорты", "size": "", "condition": "new", "fake": true, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_7431430012?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-3314280584", "title": "Новые шорты Monki, 33(50)", "price": 1200, "brand": "Monki", "category": "шорты", "size": "50", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/novye_shorty_monki_3350_3741058783?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-3599939729", "title": "Ralph lauren шорты", "price": 1200, "brand": "Ralph Lauren", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/ralph_lauren_shorty_7540089897?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-3907498", "title": "Шорты Jack wolfskin", "price": 1275, "brand": "Jack Wolfskin", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_jack_wolfskin_8239868152?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2190084378", "title": "Широкие бриджи y2k унисекс", "price": 1300, "brand": "NoName", "category": "другое", "size": "", "condition": "new", "fake": true, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shirokie_bridzhi_y2k_uniseks_8235924818?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2135508116", "title": "Шорты Nike", "price": 1301, "brand": "Nike", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "/static/buyer-pages-mfe/global/../assets/984611d353c6afdf.svg", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_nike_8206937046?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-9635230943", "title": "Шорты Sohogirls xs", "price": 1488, "brand": "Sohogirls", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_sohogirls_xs_8251072239?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-6271825663", "title": "Шорты carhartt wip оригинал", "price": 1490, "brand": "Carhartt", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_carhartt_wip_original_7781059330?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-1190113401", "title": "Шорты Nike оригинал", "price": 1499, "brand": "Nike", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_nike_original_3571906281?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-5569003633", "title": "Шорты adidas мужские", "price": 1500, "brand": "Adidas", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_adidas_muzhskie_8169534687?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2188685320", "title": "Athlex шорты", "price": 1500, "brand": "Athlex", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/athlex_shorty_8197535291?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-6285225637", "title": "Шорты адидас", "price": 1500, "brand": "NoName", "category": "шорты", "size": "", "condition": "new", "fake": true, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_adidas_2940252771?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-8206992190", "title": "Шорты джинсовые мужские", "price": 1500, "brand": "NoName", "category": "шорты", "size": "", "condition": "new", "fake": true, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_dzhinsovye_muzhskie_2538088555?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-8903126937", "title": "Шорты джинсовые мужские новые", "price": 1500, "brand": "NoName", "category": "шорты", "size": "", "condition": "new", "fake": true, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_dzhinsovye_muzhskie_novye_8114759494?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-7798895175", "title": "Шорты adidas essentials", "price": 1500, "brand": "Adidas", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_adidas_essentials_8461354169?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-6451282097", "title": "Джинсовые шорты Big boy", "price": 1500, "brand": "NoName", "category": "шорты", "size": "", "condition": "new", "fake": true, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/dzhinsovye_shorty_big_boy_8062332660?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-9189231001", "title": "Шорты George хлопок", "price": 1600, "brand": "George", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_george_hlopok_8296880413?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-3278648640", "title": "Игровые шорты игрока новой генерации", "price": 1648, "brand": "NoName", "category": "шорты", "size": "", "condition": "new", "fake": true, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/igrovye_shorty_igroka_novoy_generatsii_8379871678?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "3 дня назад", "city": "Сыктывкар"}, {"id": "avito-3444044621", "title": "Плавательные мужские шорты", "price": 1648, "brand": "NoName", "category": "шорты", "size": "", "condition": "new", "fake": true, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/plavatelnye_muzhskie_shorty_8370953166?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2985398165", "title": "Шорты Nike NSW FLC XXL", "price": 1650, "brand": "Nike", "category": "шорты", "size": "XXL", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_nike_nsw_flc_xxl_8209611358?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-6426154111", "title": "Шорты reebok crossfit", "price": 1750, "brand": "Reebok", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_reebok_crossfit_8261670420?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-7774120967", "title": "Шорты Adidas Vintage оригинал", "price": 1790, "brand": "Adidas", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_adidas_vintage_original_8358459162?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2984493605", "title": "Шорты джинсовые Mustang оригинал 48(М)", "price": 1800, "brand": "Mustang", "category": "шорты", "size": "48", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_dzhinsovye_mustang_original_48m_8107518952?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-4369916175", "title": "Шорты nike big swoosh", "price": 1800, "brand": "Nike", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_nike_big_swoosh_8062151679?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-180068384", "title": "Шорты Phoenix", "price": 1900, "brand": "Phoenix", "category": "шорты", "size": "", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_phoenix_8484996451?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-1845905978", "title": "Шорты Stussy Оригинал L", "price": 1971, "brand": "Stussy", "category": "шорты", "size": "L", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_stussy_original_l_8315592824?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-8171140028", "title": "Шорты Abercrombie & Fitch Оригинал L", "price": 1971, "brand": "Abercrombie", "category": "шорты", "size": "L", "condition": "new", "fake": false, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shorty_abercrombie_fitch_original_l_8355774644?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiIyWFBzbUJxemhUdWZLQm53Ijt994eNvj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-7418183743", "title": "Футболка приталенная", "price": 1000, "brand": "NoName", "category": "футболка", "size": "", "condition": "new", "fake": true, "img": "https://50.img.avito.st/image/1/1.j_8KcraAIxYc0oEXGFy60w3SIRK4xScWuKJCErhxIrS_0ScMHNKBF7w.jKJxR7eEp73jI2ziogP8oa2XEEjUc6JYVB6uU6mWJ6E", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_pritalennaya_8306734970?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiI1WVdIZFFxMHJWaGQxRFVzIjt9kGWRtj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-9999777195", "title": "Лонгслив bershka", "price": 1000, "brand": "Bershka", "category": "свитшот", "size": "", "condition": "new", "fake": false, "img": "https://90.img.avito.st/image/1/1.QR_F77aA7fbTT0_3y94SNdJP7_J3WOn2dz-M8nfs7FRwTOns009P93M.EdEkmk2shsAob7Wq4i6VuUz3Xb4u_zlfhaarkDeiCvc", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/longsliv_bershka_8291314891?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiI1WVdIZFFxMHJWaGQxRFVzIjt9kGWRtj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-8453230766", "title": "Футболка jack daniels archive", "price": 1000, "brand": "Jack Daniels", "category": "футболка", "size": "", "condition": "new", "fake": false, "img": "https://10.img.avito.st/image/1/1.TByJCLaA4PWfqEL0nWFFF56o4vE7v-T1O9iB8TsL4Vc8q-Tvn6hC9D8.nVdC1f0iivRo2S1sbnwQu_J0qLe_RfYX2MAT5u-s1_I?cqp=2.2LhnDdKx1gU5sZ7QAbwhSdJoeYt5K_KL9JwGcCXpGrDVbBxJ1yJf9Jn7hY3rGWaiHtSha9zz1w==", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_jack_daniels_archive_8316824631?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiI1WVdIZFFxMHJWaGQxRFVzIjt9kGWRtj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2110475525", "title": "Футболка Adidas", "price": 1000, "brand": "Adidas", "category": "футболка", "size": "", "condition": "new", "fake": false, "img": "https://10.img.avito.st/image/1/1.os6s-raADie6Wqwm5OjXs7JaDCMeTQonHipvIx75D4UZWQo9ulqsJho.E1FEUC7yGSgPnhBQ50gzcWR-d3bJyVpBlRDTrBz_tBo?cqp=2.2LhnDdKx1gU5sZ7QAbwhSdJoeYt5K_KL9JwGcCXpGrDVbBxJ1yJf9Jn7hY3rGWaiHtSha9zz1w==", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_adidas_8429049542?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiI1WVdIZFFxMHJWaGQxRFVzIjt9kGWRtj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-943306394", "title": "Футболка мужская kappa", "price": 1000, "brand": "Kappa", "category": "футболка", "size": "", "condition": "new", "fake": false, "img": "https://50.img.avito.st/image/1/1.PKWMhLaAkEyaJDJN-PQvubwmkkg-M5RMPlTxSD6Hke45J5RWmiQyTTo.s0iqm4byD8qY590SrvmQKl6WjCXYCk18jplWlwc1Khw", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_muzhskaya_kappa_2879198970?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiI1WVdIZFFxMHJWaGQxRFVzIjt9kGWRtj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-4373445624", "title": "Футболка подростковая puma оригинальная l", "price": 1000, "brand": "Puma", "category": "футболка", "size": "", "condition": "new", "fake": false, "img": "https://20.img.avito.st/image/1/1.d7btVLaA21_79Hlej21_-JL12Vtf499fX4S6W19X2v1Y999F-_R5Xls.T7fD7QjemI2jT8lj62hiF5LA4thZdql9ChOUDA26t6w?cqp=2.2LhnDdKx1gU5sZ7QAbwhSdJoeYt5K_KL9JwGcCXpGrDVbBxJ1yJf9Jn7hY3rGWaiHtSha9zz1w==", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_podrostkovaya_puma_originalnaya_l_7393011499?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiI1WVdIZFFxMHJWaGQxRFVzIjt9kGWRtj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-9680074809", "title": "Футболка adidas оригинал", "price": 1000, "brand": "Adidas", "category": "футболка", "size": "", "condition": "new", "fake": false, "img": "https://10.img.avito.st/image/1/1.c_R9u7aA3x1rG30cF45m3y8a3RnPDNsdz2u-Gc-43r_IGNsHaxt9HMs.qNttuE1vytu62CaWfgMceRsB0vjYcKhzInAnRa4HUUM?cqp=2.2LhnDdKx1gU5sZ7QAbwhSdJoeYt5K_KL9JwGcCXpGrDVbBxJ1yJf9Jn7hY3rGWaiHtSha9zz1w==", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_adidas_original_7673792850?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiI1WVdIZFFxMHJWaGQxRFVzIjt9kGWRtj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2003868216", "title": "Футболка cortez", "price": 1488, "brand": "Nike", "category": "футболка", "size": "", "condition": "new", "fake": false, "img": "https://50.img.avito.st/image/1/1.8en-X7a-XQCI-q8GkGiZhNT_XwZM8lkCQPSfBLj4XwJK_hk.lJZKJfy1l54UW3wa7A3HU722m-ErBIYJwCCWl2so33M", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_cortez_8207431425?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-7443542351", "title": "Худи champion (два цвета)", "price": 1850, "brand": "Champion", "category": "худи", "size": "", "condition": "new", "fake": false, "img": "https://10.img.avito.st/image/1/1.qg2z97a-BuTFUvTi6_XPT7BXBOIBWgLmDVzE4PVQBOYHVkI.OIGom05tlXGC6_lhV_cOPMeQ2xGNwqeol1MUWoVCIQk?cqp=2.DkZhaFsUqz2DbSQ0OFaw-8ZI1g8=", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/hudi_champion_dva_tsveta_8410393698?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-3122323144", "title": "Футболка vlone", "price": 4400, "brand": "Vlone", "category": "футболка", "size": "", "condition": "new", "fake": false, "img": "https://40.img.avito.st/image/1/1.SLC3Yra-5FnBxxZfqwcE5N3D5l8Fz-BbCckmXfHF5lsDw6A.Sgs0mcJpgBi1gUt1nls_T5bpWtjVntyLcB50y0bFKGw", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_vlone_7550068730?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-5976531286", "title": "Толстовка мужская Armani jeans", "price": 1125, "brand": "Armani", "category": "джинсы", "size": "", "condition": "new", "fake": false, "img": "https://c90.img.avito.st/image/1/1.85K9ira-X3vLL6191_Hes64oXX0PJ1t5AyGdf_stXXkJKxs.hHVaO3Cj0iVDMK0uQEnIPec4G7sLPm5sbTpw2o3dhGY", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/tolstovka_muzhskaya_armani_jeans_3506949329?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-7913730668", "title": "Зипхуди polo ralph lauren", "price": 2070, "brand": "Ralph Lauren", "category": "худи", "size": "", "condition": "new", "fake": false, "img": "https://90.img.avito.st/image/1/1.3zW-o7a-c9zIBoHajMi7UZQDcdoMDnfeAAix2PgEcd4KAjc.RGCmt0sNpZhr16_0VyjgUe_5nX9tx63wNsgX7teP4Nk", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/ziphudi_polo_ralph_lauren_8207294490?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-1778252492", "title": "Shamp speed футболка", "price": 675, "brand": "NoName", "category": "футболка", "size": "", "condition": "new", "fake": true, "img": "https://30.img.avito.st/image/1/1.tSaThLa-Gc_lIevJ9cL3GKYkG8khKR3NLS_by9UjG80nJV0.AEeIOR2zcq7PG5Kv0ZaWwEfk-DmMBbQBneQ3JCUoHL0?cqp=2.DkZhaFsUqz2DbSQ0OFaw-8ZI1g8=", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/shamp_speed_futbolka_8055300464?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2046915600", "title": "Футболка Fifth Loop из США", "price": 3255, "brand": "NoName", "category": "футболка", "size": "", "condition": "new", "fake": true, "img": "https://c70.img.avito.st/image/1/1.8roTTLa-XlNl6axVe0_iuzrsXFWh4VpRreecV1XrXFGn7Ro.98Q6Wqeg71D0XpgvQ0H1YlPeFHE0LRcSymQGuqw9dR8", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_fifth_loop_iz_ssha_8190107080?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-1090902748", "title": "Свитер fischer Promo", "price": 3152, "brand": "Fischer", "category": "другое", "size": "", "condition": "new", "fake": false, "img": "https://50.img.avito.st/image/1/1.Nqsm7ba-mkJQSGhERvlV62VMmESUQJ5AmEZYRmBKmECSTN4.YYutLkhy33wOXB-3OrwFjgJfhHnctw6V6Suy-ryvi6Q", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/sviter_fischer_promo_7836635423?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-9697221795", "title": "Поло стон айленд", "price": 1000, "brand": "NoName", "category": "футболка", "size": "", "condition": "new", "fake": true, "img": "https://b00.img.avito.st/image/1/1.HD8D9La-sNZ1UULQN5RSRANUstCxWbTUvV9y0kVTstS3VfQ.GUP_Ouhi6GUKD10MjJ5d6f9cQauSaGYizUwYCc7zfCc?cqp=2.DkZhaFsUqz2DbSQ0OFaw-8ZI1g8=", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/polo_ston_aylend_8575762327?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-6822797260", "title": "Толстовка fischer Fleece Logo", "price": 7337, "brand": "Fischer", "category": "другое", "size": "", "condition": "new", "fake": false, "img": "https://00.img.avito.st/image/1/1.Ec6zsLa-vSfFFU8hnfwnyvARvyEBHbklDRt_I_UXvyUHEfk.xNDjE48O5iiUm2Gl_yT_cdlORgZGr0hTkNoYYWw6i98?cqp=2.DkZhaFsUqz2DbSQ0OFaw-8ZI1g8=", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/tolstovka_fischer_fleece_logo_7836419401?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-8595916720", "title": "Худи толстовка Gap оригинал", "price": 4050, "brand": "Gap", "category": "худи", "size": "", "condition": "new", "fake": false, "img": "https://90.img.avito.st/image/1/1.vDFYnba-ENguOOLeLJOmLUU9Et7qMBTa5jbS3B46EtrsPFQ.cx2OEDpFmGvky17retB2kmkJ19oYyXlEWYhA72OVVXU", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/hudi_tolstovka_gap_original_8286532937?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-3137101373", "title": "Толстовка худи мужская", "price": 1275, "brand": "NoName", "category": "худи", "size": "", "condition": "new", "fake": true, "img": "https://40.img.avito.st/image/1/1.pbuun7a-CVLYOvtU6MWS54Q9C1QcMg1QEDTLVug4C1AaPk0.RaLIIw9GgSM_UAqdvO5YWBI07i-AjsaEuqiUvfNFPmc", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/tolstovka_hudi_muzhskaya_3347260138?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-1574650626", "title": "Худи Calvin Klein оригинал из США", "price": 5580, "brand": "Calvin Klein", "category": "худи", "size": "", "condition": "new", "fake": false, "img": "https://40.img.avito.st/image/1/1.wH6Wwra-bJfgZ56RmsWVQoxibpEkb2iVKGmuk9BlbpUiYyg.OrRcf0t_IBU_qaIFt8ruG9sUbOn6GPY7_Dn_aa1q9Lo", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/hudi_calvin_klein_original_iz_ssha_7998136002?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-376712183", "title": "Футболка Amiri белая", "price": 1199, "brand": "Amiri", "category": "футболка", "size": "", "condition": "new", "fake": false, "img": "https://c70.img.avito.st/image/1/1.mMcfora-NC5pB8YoI-TqqDUCNiitDzAsoQn2KlkFNiyrA3A.QLX0WHZOJrhpeywCnSdbghX2GZfeZ4ZH5Od87_DATNs", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_amiri_belaya_8207710611?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-41192906", "title": "Мужской свитер Tommy Hilfiger оригинал США", "price": 6300, "brand": "Tommy Hilfiger", "category": "другое", "size": "", "condition": "new", "fake": false, "img": "https://c90.img.avito.st/image/1/1.WV1aY7a-9bQsxgeyZFJQb0DD97LozvG25Mg3sBzE97buwrE.L928tc6vmHXVuGC1lbwPXz09jvOIEc_OVNjYAy8oT14", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/muzhskoy_sviter_tommy_hilfiger_original_ssha_8285939027?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-4745105224", "title": "Футболка Bape aape inoapf", "price": 1048, "brand": "Bape", "category": "футболка", "size": "", "condition": "new", "fake": false, "img": "https://30.img.avito.st/image/1/1.w2EdSLa-b4hr7Z2OF0vGMBzobY6v5WuKo-OtjFvvbYqp6Ss.g9UMyp_3AbqETPByk-wMPGbJnBMZUUObO4tJaUcfXn4?cqp=2.DkZhaFsUqz2DbSQ0OFaw-8ZI1g8=", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_bape_aape_inoapf_8397922602?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-9394663050", "title": "Худи Владимир Шешенин L", "price": 2660, "brand": "NoName", "category": "худи", "size": "L", "condition": "new", "fake": true, "img": "https://20.img.avito.st/image/1/1.WNay0ba-9D_EdAY5jsAf_cFw9jkAfPA9DHo2O_R29j0GcLA.Nly2Lcy8mBfL5XXStbkuh_N_ZuVH1uVYlwRLcmMFYtI?cqp=2.DkZhaFsUqz2DbSQ0OFaw-8ZI1g8=", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/hudi_vladimir_sheshenin_l_7350630454?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2162811956", "title": "Толстовка", "price": 1125, "brand": "NoName", "category": "другое", "size": "", "condition": "new", "fake": true, "img": "https://70.img.avito.st/image/1/1.kus2vra-PgJAG8wEHsj10hwcPASEEzoAiBX8BnAZPACCH3o.p6-76y9gYMGhR8cS2pRn1Zldtsk_WfbIgJwpd_6Kvnc", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/tolstovka_3346811225?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-3728589960", "title": "Джемпер мужской новый", "price": 1125, "brand": "NoName", "category": "другое", "size": "", "condition": "new", "fake": true, "img": "https://60.img.avito.st/image/1/1.FFgGYba-uLFwxEq3IgV2PxHDure0zLyzuMp6tUDGurOywPw.j1L7O4naAS7pLzeutsa85Y_CxYhOna65sXuXMh2J8IE", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/dzhemper_muzhskoy_novyy_3442863694?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-6449040138", "title": "Футболка мужская", "price": 810, "brand": "NoName", "category": "футболка", "size": "", "condition": "new", "fake": true, "img": "https://70.img.avito.st/image/1/1._p8nUba-UnZR9KBwV0K9nDPzUHCV_FZ0mfqQcmH2UHST8BY.wxeEQrfPjR1T-DtdpwwO_YCxAQ9c_GWLeyl7_YEes9g", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_muzhskaya_3314830731?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-5073293787", "title": "Нательник флисовый", "price": 3880, "brand": "NoName", "category": "другое", "size": "", "condition": "new", "fake": true, "img": "https://50.img.avito.st/image/1/1.eyZqfra-188c2yXJEBMrbE3e1cnY09PN1NUVyyzZ1c3e35M._SFuxiyEEBtYrbssVcrfq9H9KxIobLPIl22LoGiuNZg", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/natelnik_flisovyy_2746793624?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-6746698368", "title": "Толстовка худи мужская", "price": 1350, "brand": "NoName", "category": "худи", "size": "", "condition": "new", "fake": true, "img": "https://40.img.avito.st/image/1/1.rtFeHLa-AjgoufA-DjaM23O-AD7ssQY64LfAPBi7ADrqvUY.hPzyqjqqELGSKp9-xix1hLoob-SoZ27JDt6lOEUR1sc", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/tolstovka_hudi_muzhskaya_3346911955?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-1460130269", "title": "Футболка красная Renault Arkana XXL", "price": 2117, "brand": "NoName", "category": "футболка", "size": "XXL", "condition": "new", "fake": true, "img": "https://40.img.avito.st/image/1/1.dCdE4ra-2M4yRyrIIPd3MGBA2sj2T9zM-kkaygJF2szwQ5w.HidcWABYNTNF6WEwSLk1EkrvsMQr0tUcb1kytNsaceE", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_krasnaya_renault_arkana_xxl_3030780921?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-1171194335", "title": "Толстовка мужская Diesel", "price": 1350, "brand": "Diesel", "category": "другое", "size": "", "condition": "new", "fake": false, "img": "https://20.img.avito.st/image/1/1.sVxLw7a-HbU9Zu-zJf2pbllhH7P5bhm39WjfsQ1kH7f_Ylk.C0vjerIhA9lb0KEoZHJl6VE7nMPzCtYh4Q8680FsrsM?cqp=2.DkZhaFsUqz2DbSQ0OFaw-8ZI1g8=", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/tolstovka_muzhskaya_diesel_3507115637?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2817817344", "title": "Футболка polo мужская размер М", "price": 2450, "brand": "NoName", "category": "футболка", "size": "", "condition": "new", "fake": true, "img": "https://c70.img.avito.st/image/1/1.CHdmBLa-pJ4QoVaYeih7Z0KmppjUqaCc2K9mmiCjppzSpeA.qha10kmxa9zboZzGOQPuZTldR5nYfcunPHZiaalRzjY", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/futbolka_polo_muzhskaya_razmer_m_3031442918?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-1866516219", "title": "Толстовка мужская giovanni vittori", "price": 1125, "brand": "Giovanni Vittori", "category": "другое", "size": "", "condition": "new", "fake": false, "img": "https://70.img.avito.st/image/1/1.Jld3Yba-ir4BxHi4N0VUb2XDiLjFzI68ycpIujHGiLzDwM4.APtizsnlY43NglRUhrOCEWRuKzHcj-LUxckKk8juMnU", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/tolstovka_muzhskaya_giovanni_vittori_3506678492?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-8364253492", "title": "Толстовка мужская Calvin Klein", "price": 1125, "brand": "Calvin Klein", "category": "другое", "size": "", "condition": "new", "fake": false, "img": "https://20.img.avito.st/image/1/1.O5VqO7a-l3wcnmV6EH9rjniZlXrYlpN-1JBVeCyclX7emtM.7w0aiDxLyXa7zvk6QC8TnzI0wVdMtenrI55sbHQuRNc?cqp=2.DkZhaFsUqz2DbSQ0OFaw-8ZI1g8=", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/tolstovka_muzhskaya_calvin_klein_3507641070?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-2864004428", "title": "Толстовка мужская giovanni vittori taddi", "price": 1125, "brand": "Giovanni Vittori", "category": "другое", "size": "", "condition": "new", "fake": false, "img": "https://c70.img.avito.st/image/1/1.sXp7Vra-HZMN8--VFWzKbGz0H5XJ-xmRxf3flz3xH5HP91k.Ka3zjpemZnoEPeZN1Zo5JKeg_GdMgNayuYQgO7RLGlA", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/tolstovka_muzhskaya_giovanni_vittori_taddi_3346751598?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-4001183930", "title": "Tолcтовка c кaпюшoнoм Giоrgiо Аrmаni", "price": 1125, "brand": "NoName", "category": "другое", "size": "", "condition": "new", "fake": true, "img": "https://c60.img.avito.st/image/1/1.tf8smLa-GRZaPesQStLI8io5GxCeNR0UkjPbEmo_GxSYOV0.XMQsv0PXpJP6SVrjnz9wtJrn-H-QSnJny7ooGaxY0-0", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/tolctovka_c_kapyushonom_giorgio_armani_4691198378?context=H4sIAAAAAAAA_wF_AID_YTo0OntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czozOiJzcmMiO3M6MTA6ImJyb2FkbWF0Y2giO3M6MTE6IndpZGdldFRpdGxlIjtOO3M6MToieCI7czozMToiMmFvczFta3UzazMza2l0Y2k0a2wwdzhobGc2NTB1eiI7fb-rSad_AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-7911009015", "title": "Поло нежное ажурное", "price": 1000, "brand": "NoName", "category": "футболка", "size": "", "condition": "new", "fake": true, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/polo_nezhnoe_azhurnoe_8248384536?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiI1WVdIZFFxMHJWaGQxRFVzIjt9kGWRtj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-613640910", "title": "Лонгслив с перьями lime", "price": 1000, "brand": "NoName", "category": "свитшот", "size": "", "condition": "new", "fake": true, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/longsliv_s_peryami_lime_8416551626?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiI1WVdIZFFxMHJWaGQxRFVzIjt9kGWRtj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}, {"id": "avito-8012095900", "title": "Винтажный лонгслив world wrestling entertainment", "price": 1000, "brand": "NoName", "category": "свитшот", "size": "", "condition": "new", "fake": true, "img": "", "url": "https://www.avito.ru/syktyvkar/odezhda_obuv_aksessuary/vintazhnyy_longsliv_world_wrestling_entertainment_4655453690?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiI1WVdIZFFxMHJWaGQxRFVzIjt9kGWRtj8AAAA", "date": "2026-11-10", "city": "Сыктывкар"}]};
 
-const $ = id => document.getElementById(id);
+/* ---------------- три пробные ссылки: 3 дня с первого открытия ---------------- */
+const TRIALS = { s1: 3, s2: 3, s3: 3, owner: 0 };  // 0 = бессрочно
+const LS = 'trial_';
+const FIXED_TOKEN = 'owner';
+const DAY = 86400000;
 
-/* ---------------- без кодов и ограничений ---------------- */
-const BUILD = 'v15';
-
-function start() {
-  const url = new URL(location.href);
-  if (url.searchParams.has('code')) {
-    url.searchParams.delete('code');
-    history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
-  }
-  boot();
+function currentToken() {
+  try { return (new URL(location.href).searchParams.get('t') || FIXED_TOKEN || '').toLowerCase(); }
+  catch (e) { return String(FIXED_TOKEN || '').toLowerCase(); }
 }
 
-function median(a){ if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y); const m=s.length>>1;
-  return s.length%2 ? s[m] : (s[m-1]+s[m])/2; }
+function activateToken(token) {
+  if (!token || !(token in TRIALS)) return;
+  const key = LS + token;
+  if (localStorage.getItem(key)) return;
+  const days = TRIALS[token];
+  localStorage.setItem(key, JSON.stringify(days === 0 ? { permanent: true } : { start: Date.now(), days: days }));
+}
 
-// ---------- "неиронка": статистическая оценка рынка ----------
-function buildModel(items){
-  const byKey = new Map();   // cat|brand|type -> prices
-  const byCat = new Map();   // cat -> prices
+function accessState() {
+  for (const t in TRIALS) {
+    const raw = localStorage.getItem(LS + t);
+    if (!raw) continue;
+    let s;
+    try { s = JSON.parse(raw); } catch (e) { continue; }
+    if (s.permanent) return { ok: true, permanent: true };
+    const total = (s.days || 3) * DAY;
+    const left = total - (Date.now() - (s.start || 0));
+    if (left > 0) return { ok: true, leftMs: left };
+  }
+  return { ok: false };
+}
+
+const $ = (id) => document.getElementById(id);
+let stateType = 'all';
+
+function median(arr) {
+  if (!arr.length) return 0;
+  const s = arr.slice().sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function buildModel(items) {
+  const byKey = new Map();
+  const byCat = new Map();
   const all = [];
-  for(const it of items){
+  for (const it of items) {
     const type = it.fake ? 'fake' : 'orig';
-    const k1 = `${it.category}|${it.brand}|${type}`;
-    const k2 = `${it.category}|${type}`;
-    if(!byKey.has(k1)) byKey.set(k1, []);
+    const k1 = it.category + '|' + it.brand + '|' + type;
+    const k2 = it.category + '|' + type;
+    if (!byKey.has(k1)) byKey.set(k1, []);
     byKey.get(k1).push(it.price);
-    if(!byCat.has(k2)) byCat.set(k2, []);
+    if (!byCat.has(k2)) byCat.set(k2, []);
     byCat.get(k2).push(it.price);
     all.push(it.price);
   }
-  return {byKey, byCat, allMedian: median(all)};
+  return { byKey: byKey, byCat: byCat, allMedian: median(all) };
 }
 
-function estimateMarket(item, model){
+function estimate(item, model) {
   const type = item.fake ? 'fake' : 'orig';
-  const k1 = `${item.category}|${item.brand}|${type}`;
-  const k2 = `${item.category}|${type}`;
-  const g1 = model.byKey.get(k1) || [];
-  let est, basis;
-  if(g1.length >= 3){ est = median(g1); basis = `по ${g1.length} похожим (${type})`; }
-  else {
-    const g2 = model.byCat.get(k2) || [];
-    if(g2.length >= 3){ est = median(g2); basis = `по категории (${type})`; }
-    else { est = model.allMedian * (item.fake ? 0.6 : 1); basis = 'по всему рынку'; }
+  const g1 = model.byKey.get(item.category + '|' + item.brand + '|' + type) || [];
+  const g2 = model.byCat.get(item.category + '|' + type) || [];
+  let market, basis;
+  if (g1.length >= 3) { market = median(g1); basis = 'по ' + g1.length + ' похожим'; }
+  else if (g2.length >= 3) { market = median(g2); basis = 'по категории'; }
+  else { market = model.allMedian * (item.fake ? 0.6 : 1); basis = 'по всему рынку'; }
+
+  const discount = market > 0 ? 1 - item.price / market : 0;
+  const resale = market * 0.8 * 0.95;
+  return { market: Math.round(market), discount: discount, profit: Math.round(resale - item.price), basis: basis };
+}
+
+function fmt(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
+
+function fillSelect(el, values) {
+  for (const v of values) {
+    const o = document.createElement('option');
+    o.value = v;
+    o.textContent = v;
+    el.appendChild(o);
   }
-  // скидка к рынку
-  const discount = est > 0 ? 1 - item.price / est : 0;
-  // сколько останется при перепродаже: берём 80% медианы (торг) минус 5% на продвижение
-  const resale = est * 0.80 * 0.95;
-  const profit = Math.round(resale - item.price);
-  const score = Math.round(Math.max(0, Math.min(1, discount)) * 100);
-  return {market: Math.round(est), discount, profit, score, basis};
 }
 
-// ---------- рендер ----------
-function fillSelect(el, values, placeholder, current){
-  el.innerHTML = '';
-  const o = document.createElement('option'); o.value=''; o.textContent=placeholder; el.appendChild(o);
-  for(const v of values){ const x=document.createElement('option'); x.value=v; x.textContent=v; el.appendChild(x); }
-  el.value = current || '';
+function cardOf(item, est) {
+  const a = document.createElement('a');
+  a.href = item.url || '#';
+  a.target = '_blank';
+  a.rel = 'noopener';
+
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const thumb = document.createElement('div');
+  thumb.className = 'thumb';
+  if (item.img) thumb.style.backgroundImage = "url('" + item.img + "')";
+  else thumb.textContent = 'без фото';
+
+  const d = Math.round(est.discount * 100);
+  const badge = document.createElement('div');
+  badge.className = 'badge ' + (d >= 40 ? 'good' : d >= 20 ? 'mid' : 'bad');
+  badge.textContent = (d >= 0 ? '−' : '+') + Math.abs(d) + '% к рынку';
+  thumb.appendChild(badge);
+
+  const body = document.createElement('div');
+  body.className = 'body';
+
+  const title = document.createElement('div');
+  title.className = 'title';
+  title.textContent = item.title;
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const tags = [item.brand, item.size, item.fake ? 'паль' : '', item.condition === 'new' ? 'новое' : ''];
+  for (const t of tags) {
+    if (!t) continue;
+    const s = document.createElement('span');
+    s.className = 'tag' + (t === 'паль' ? ' fake' : '');
+    s.textContent = t;
+    meta.appendChild(s);
+  }
+
+  const price = document.createElement('div');
+  price.className = 'price';
+  price.textContent = fmt(item.price);
+
+  const estEl = document.createElement('div');
+  estEl.className = 'est';
+  estEl.innerHTML = 'рынок ≈ <b>' + fmt(est.market) + '</b><br>прибыль: <b style="color:' +
+    (est.profit > 0 ? 'var(--accent)' : 'var(--bad)') + '">' + (est.profit > 0 ? '+' : '') + fmt(est.profit) +
+    '</b><br><span style="opacity:.7">' + est.basis + '</span>';
+
+  body.appendChild(title);
+  body.appendChild(meta);
+  body.appendChild(price);
+  body.appendChild(estEl);
+  card.appendChild(thumb);
+  card.appendChild(body);
+  a.appendChild(card);
+  return a;
 }
 
-function fmt(n){ return n.toLocaleString('ru-RU') + ' ₽'; }
-
-function applyFilters(){
-  if(!state.data) return;
-  const items = state.data.items;
+function apply() {
   const q = $('q').value.trim().toLowerCase();
+  const city = $('city').value;
   const cat = $('cat').value, brand = $('brand').value, size = $('size').value;
   const pmin = +$('pmin').value || 0, pmax = +$('pmax').value || Infinity;
   const photoOnly = $('photoOnly').checked, newOnly = $('newOnly').checked;
 
-  const model = state.model;
-  let list = items.map(it => ({...it, est: estimateMarket(it, model)}));
+  const model = buildModel(DATA.items);
+  let list = DATA.items.map(function (it) { return { item: it, est: estimate(it, model) }; });
 
-  list = list.filter(it => {
-    if(q && !(it.title.toLowerCase().includes(q) || it.brand.toLowerCase().includes(q))) return false;
-    if(cat && it.category !== cat) return false;
-    if(brand && it.brand !== brand) return false;
-    if(size && it.size !== size) return false;
-    if(it.price < pmin || it.price > pmax) return false;
-    if(photoOnly && !it.img) return false;
-    if(newOnly && it.condition !== 'new') return false;
-    if(state.type === 'fake' && !it.fake) return false;
-    if(state.type === 'orig' && it.fake) return false;
+  list = list.filter(function (x) {
+    const it = x.item;
+    if (q && (it.title + ' ' + it.brand).toLowerCase().indexOf(q) < 0) return false;
+    if (city && it.city !== city) return false;
+    if (cat && it.category !== cat) return false;
+    if (brand && it.brand !== brand) return false;
+    if (size && it.size !== size) return false;
+    if (it.price < pmin || it.price > pmax) return false;
+    if (photoOnly && !it.img) return false;
+    if (newOnly && it.condition !== 'new') return false;
+    if (stateType === 'fake' && !it.fake) return false;
+    if (stateType === 'orig' && it.fake) return false;
     return true;
   });
 
   const sort = $('sort').value;
-  list.sort((a,b) => {
-    if(sort === 'price') return a.price - b.price;
-    if(sort === 'profit') return b.est.profit - a.est.profit;
-    if(sort === 'new') return (b.date||'').localeCompare(a.date||'');
-    return b.est.score - a.est.score;
+  list.sort(function (a, b) {
+    if (sort === 'price') return a.item.price - b.item.price;
+    if (sort === 'profit') return b.est.profit - a.est.profit;
+    return b.est.discount - a.est.discount;
   });
 
-  render(list);
-  const good = list.filter(i => i.est.discount >= 0.4).length;
-  const fakes = list.filter(i => i.fake).length;
-  $('stats').textContent = `Найдено: ${list.length} · выгодных (≥40%): ${good} · паль/без бренда: ${fakes} · медиана рынка: ${fmt(Math.round(model.allMedian))}`;
+  const grid = $('grid');
+  grid.textContent = '';
+  for (const x of list) grid.appendChild(cardOf(x.item, x.est));
+
+  const good = list.filter(function (x) { return x.est.discount >= 0.4; }).length;
+  $('stats').textContent = 'Найдено: ' + list.length + ' · выгодных (≥40%): ' + good +
+    ' · медиана рынка: ' + fmt(Math.round(model.allMedian));
   $('empty').hidden = list.length > 0;
 }
 
-function render(list){
-  const grid = $('grid');
-  grid.innerHTML = '';
-  for(const it of list){
-    const d = Math.round(it.est.discount * 100);
-    const cls = d >= 40 ? 'good' : d >= 20 ? 'mid' : 'bad';
-    const card = document.createElement('a');
-    card.className = 'cardlink';
-    card.href = it.url || '#';
-    card.target = '_blank'; card.rel = 'noopener';
-    card.innerHTML = `
-      <div class="card">
-        <div class="thumb" style="${it.img ? `background-image:url('${it.img}')` : ''}">
-          ${it.img ? '' : 'без фото'}
-          <div class="badge ${cls}">${d >= 0 ? '−' : '+'}${Math.abs(d)}% к рынку</div>
-        </div>
-        <div class="body">
-          <div class="title">${it.title}</div>
-          <div class="meta">
-            <span class="tag">${it.brand}</span>
-            ${it.size ? `<span class="tag">${it.size}</span>` : ''}
-            ${it.fake ? '<span class="tag fake">паль · нет бренда</span>' : ''}
-            ${it.condition === 'new' ? '<span class="tag">новое</span>' : ''}
-          </div>
-          <div class="price">${fmt(it.price)}</div>
-          <div class="est">рынок ≈ <b>${fmt(it.est.market)}</b><br>
-            прибыль: <b style="color:${it.est.profit > 0 ? 'var(--accent)' : 'var(--bad)'}">${it.est.profit > 0 ? '+' : ''}${fmt(it.est.profit)}</b><br>
-            <span style="opacity:.7">${it.est.basis}</span></div>
-        </div>
-      </div>`;
-    grid.appendChild(card);
+function init() {
+  $('city').textContent = DATA.city || '';
+  const dt = new Date(DATA.updated);
+  $('updated').textContent = 'обновлено: ' + dt.toLocaleString('ru-RU') + ' · ' + DATA.items.length + ' объявлений';
+
+  const uniq = function (key) {
+    const s = new Set();
+    DATA.items.forEach(function (it) { if (it[key]) s.add(it[key]); });
+    return Array.from(s).sort();
+  };
+  fillSelect($('cat'), uniq('category'));
+  fillSelect($('brand'), uniq('brand'));
+  fillSelect($('size'), uniq('size'));
+  fillSelect($('city'), uniq('city'));
+
+  ['q', 'city', 'cat', 'brand', 'size', 'sort', 'pmin', 'pmax', 'photoOnly', 'newOnly'].forEach(function (id) {
+    $(id).addEventListener('input', apply);
+  });
+  document.querySelectorAll('#typeChips .chip').forEach(function (ch) {
+    ch.addEventListener('click', function () {
+      document.querySelectorAll('#typeChips .chip').forEach(function (c) { c.classList.remove('on'); });
+      ch.classList.add('on');
+      stateType = ch.dataset.type;
+      apply();
+    });
+  });
+
+  apply();
+}
+
+function boot() {
+  activateToken(currentToken());
+  const st = accessState();
+  if (!st.ok) {
+    document.getElementById('lock').hidden = false;
+    return;
+  }
+  init();
+  if (st.leftMs) {
+    const el = $('updated');
+    const d = Math.ceil(st.leftMs / DAY);
+    el.textContent += ' · доступ: осталось ' + d + ' дн';
   }
 }
 
-async function boot(){
-  const resp = await fetch('data.json', {cache:'no-store'});
-  const data = await resp.json();
-  state.data = data;
-  state.model = buildModel(data.items);
-  $('city').textContent = data.city || '';
-  const dt = new Date(data.updated);
-  $('updated').textContent = `обновлено: ${dt.toLocaleString('ru-RU')} · ${data.items.length} объявлений`;
-
-  const uniq = k => [...new Set(data.items.map(i => i[k]).filter(Boolean))].sort();
-  fillSelect($('cat'), uniq('category'), 'Все категории');
-  fillSelect($('brand'), uniq('brand'), 'Все бренды');
-  fillSelect($('size'), uniq('size'), 'Все размеры');
-
-  for(const el of ['q','cat','brand','size','sort','pmin','pmax','photoOnly','newOnly'])
-    $(el).addEventListener('input', applyFilters);
-
-  document.querySelectorAll('#typeChips .chip').forEach(ch => ch.addEventListener('click', () => {
-    document.querySelectorAll('#typeChips .chip').forEach(c => c.classList.remove('on'));
-    ch.classList.add('on'); state.type = ch.dataset.type; applyFilters();
-  }));
-
-  applyFilters();
-}
-
-start();
-// service worker отключён: он отдавал устаревшую страницу из кэша
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations()
-    .then(rs => rs.forEach(r => r.unregister()))
-    .catch(() => {});
-  if (window.caches) {
-    caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(() => {});
-  }
-}
+boot();
 </script>
 </body>
 </html>
