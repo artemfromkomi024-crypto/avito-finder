@@ -119,11 +119,40 @@ const state = {data:null, type:'all'};
 const $ = id => document.getElementById(id);
 
 /* ---------------- доступ: серверный триал (Cloudflare Worker) ---------------- */
-const BUILD = 'v8';
+const BUILD = 'v10';
 const WORKER = 'https://avito-finder-trial.artemfromkomi024.workers.dev';
 const LS_DEV = 'avito_device';
 const LS_STATE = 'avito_state_v2';
 const DAY = 86400000;
+
+/* офлайн-проверка кодов: sha256(КОД|соль) -> дни */
+const CODE_HASHES = {
+  "beccf00753aa9f2e1367f5828e1c2003e9e6bf0d6451828841860d806a3f2b85": 3,
+  "5a49289a8bcfe85546a8ca1cfede887e405c9d34501c5d92fb9552d1413dd89f": 3,
+  "f0e64817d07a77c6a007b1fdb5d1adb0966cc5e406ef046ddb70908fa5d1a429": 3,
+  "beecd8fc837fb3bdb0ec8defb33ccaeb39c1c1a130d3d7368f7d33b72ef040ec": 3,
+  "735c2a6f1b5623ccdb07b74d1a41a8fb22af11a09ad600b4b208b237285d76e2": 3,
+  "22ad59feffa094f7a7f4b609ee9462f6982c4cda0eade23d7bb6a8730706313b": 3,
+  "bee32b19198bf7e42ba9294b4465b9396260f17087cf8a71bb4781ff224c0d66": 3,
+  "9a1bf8588b80a5fc8ef245eb017418a21452260f79aa8d46c698f50b848261ac": 3,
+  "7ce87af1f4519865d99890072e46ff2a637b0baf5d22a6ef579ecb975159e275": 3,
+  "9fb7c497bb71693bffcc7a2b14522eda3c7e87a3012a58a89c1eb2b459b4758a": 30,
+  "14cfadbde9cec8d4daf113f407733428d8e60f70e34129e8416285be67894708": 30,
+  "271ce29b9ce66572dea039b9dfc49ffeb7f01e3b8aeb7995d313598a5b963bd4": 30,
+  "26dc42624423b64882ddd5fd3bb3b42b10b0324d4e71f244e80cd7b7880f769c": 30,
+  "105a7d3b86946930a78e1e958dc256f66e2264a40086367c66fe91af846f3ab5": 30,
+  "4471c46671c7cf78b9a06c3879789c84c0916d5b4c8f727bb1235a58354623dd": 30,
+  "1b012763e980ddca64940d7db436fd6477eba8a9cecce382d24d7ce43c4b45d8": 30,
+  "6270804751f8e5f4bb7b0af5a2840532bb945ecbb13fc9b89b6d666ef3e0a712": 30,
+  "548d91774f47a45df39a0fd587128111b0106008bb824dd92e51d01640e93892": 90,
+  "f4f6e6d4fc8ce0984725672de9c996a0960d8658feb73ad5df4631858fd19197": 90,
+  "7c9f8b08a0cdda17481d0a668e4a98c52447154f4551a45dd703ed0c6d64b594": 90,
+  "19246e6cef6187f18a75b9ceef0e1a176e1be939acc6251ae5e8ba16823704b0": 90,
+  "731d993c14fb2020a80e3e37bbff4a7b4575cc287dbb17f439699375ea545a02": 90,
+  "ff91316b8d01bde24e961f95235ef234c573aafd00f71502d4637820e70f6a70": 90,
+  "f0c2956e2ad61ae75b0f8353920b2a73650cbffa73398ae9841cfec2e61b79fe": 90,
+  "9f346b1ff9efa44e5f15c313030b0334544741756d623c8d9ad1e3b728381b22": 90
+};
 
 function deviceId() {
   let d = localStorage.getItem(LS_DEV);
@@ -136,7 +165,8 @@ function deviceId() {
 
 async function api(path, body) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
+  const abort = setTimeout(() => ctrl.abort(), 6000);
+  const hardTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 6500));
   try {
     const opts = { signal: ctrl.signal };
     if (body) {
@@ -144,11 +174,11 @@ async function api(path, body) {
       opts.headers = { 'content-type': 'application/json' };
       opts.body = JSON.stringify(body);
     }
-    const res = await fetch(WORKER + path, opts);
+    const res = await Promise.race([fetch(WORKER + path, opts), hardTimeout]);
     if (!res.ok) { const e = new Error('http ' + res.status); e.status = res.status; throw e; }
-    return await res.json();
+    return await Promise.race([res.json(), new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 4000))]);
   } finally {
-    clearTimeout(timer);
+    clearTimeout(abort);
   }
 }
 
@@ -174,19 +204,38 @@ async function resolveAccess() {
 }
 
 /** 'ok' | 'bad' | 'offline' */
+async function sha256hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** 'ok' | 'bad' | 'offline' */
 async function submitCode(raw) {
   const code = (raw || '').trim().toUpperCase();
   if (!code) return 'bad';
-  let r;
+
   try {
-    r = await api('/redeem', { device: deviceId(), code: code });
+    const r = await api('/redeem', { device: deviceId(), code: code });
+    if (r.permanent) { cacheState({ permanent: true }); return 'ok'; }
+    if (r.leftMs > 0) { cacheState({ leftMs: r.leftMs }); return 'ok'; }
+    return 'bad';
   } catch (e) {
     if (e.status === 403) return 'bad';
+  }
+
+  // сервер недоступен — проверяем код офлайн по хешам
+  try {
+    const h = await sha256hex(code + '|AF-2026-salt');
+    const days = CODE_HASHES[h];
+    if (days) {
+      cacheState({ leftMs: days * DAY });
+      localStorage.setItem('avito_offline_code', code);
+      return 'ok';
+    }
+    return 'bad';
+  } catch (e) {
     return 'offline';
   }
-  if (r.permanent) { cacheState({ permanent: true }); return 'ok'; }
-  if (r.leftMs > 0) { cacheState({ leftMs: r.leftMs }); return 'ok'; }
-  return 'bad';
 }
 
 function showTrialBanner(leftMs) {
