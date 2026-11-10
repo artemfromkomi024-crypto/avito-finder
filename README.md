@@ -61,7 +61,69 @@ python parser/avito_parser.py
 - если Авито вернул «Доступ ограничен» — прогон прекращается, старый `data.json` не портится;
 - пишет `data.json` в корень проекта (его и читает приложение).
 
-## Расписание 2 раза в день (бесплатно)
+## Пробный доступ (Cloudflare Worker)
+
+Триал выдаётся **сервером**, коды в клиенте не хранятся.
+
+- Worker: `https://avito-finder-trial.artemfromkomi024.workers.dev`
+- Код: `worker/src/index.js`, конфиг: `worker/wrangler.toml`
+- Хранилище: KV `TRIALS` (id `b568c90323704789b359e7eb7d0421c8`)
+- Эндпоинты: `POST /redeem {device, code}`, `GET /status?device=...`
+
+Коды (только в воркере: `TRIAL_CODE` / `OWNER_CODE`):
+
+| Код | Что даёт |
+|---|---|
+| `FRIEND-3D` | 3 дня на устройство, один раз |
+| `OWNER-2026` | бессрочный доступ на устройство |
+
+Ссылки для выдачи:
+
+```
+https://artemfromkomi024-crypto.github.io/avito-finder/?code=FRIEND-3D
+https://artemfromkomi024-crypto.github.io/avito-finder/?code=OWNER-2026
+```
+
+Передеплой после правки воркера:
+
+```
+cd worker
+wrangler deploy
+```
+
+Устройство определяется UUID в `localStorage`: сброс данных сайта даёт новое
+устройство и новый триал — известное ограничение (лечится привязкой к IP).
+
+## Публикация на GitHub Pages
+
+Сайт: **https://artemfromkomi024-crypto.github.io/avito-finder/**
+Репозиторий: `github.com/artemfromkomi024-crypto/avito-finder` (public, деплой через GitHub Actions)
+
+После каждого прогона парсера — одна команда:
+
+```
+powershell -ExecutionPolicy Bypass -File publish.ps1
+```
+
+Скрипт заливает `data.json` (и остальные файлы) через GitHub API, Actions сам пересобирает сайт за ~1 минуту.
+
+## Режимы парсинга
+
+```
+python avito_parser.py            # через SOCKS-прокси из config.json (нужен)
+python avito_parser.py --no-proxy # напрямую (с домашнего IP Авито банит сразу)
+```
+
+Что проверено на практике:
+- **прямое подключение** — `439`, блок (домашний IP в бане у Авито);
+- **через армянский SOCKS** (`192.168.0.111:10808`, Ереван) — работает, но после
+  **1–2 запросов** прокси тоже уходит в бан на время (обычно от 30 минут до нескольких часов);
+- поэтому за один прогон реально собрать 1–2 категории, дальше `data.json` сохраняет
+  уже собранное (слияние по ссылке) и дополняется в следующих прогонах.
+
+Прокси из профиля твоего Firefox парсер не использует — он запускает свой экземпляр
+Firefox с прокси из `config.json`. Отключать прокси в Firefox для парсинга не нужно.
+
 
 Планировщик Windows:
 
