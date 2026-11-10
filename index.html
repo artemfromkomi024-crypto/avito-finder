@@ -119,7 +119,7 @@ const state = {data:null, type:'all'};
 const $ = id => document.getElementById(id);
 
 /* ---------------- доступ: серверный триал (Cloudflare Worker) ---------------- */
-const BUILD = 'v7';
+const BUILD = 'v8';
 const WORKER = 'https://avito-finder-trial.artemfromkomi024.workers.dev';
 const LS_DEV = 'avito_device';
 const LS_STATE = 'avito_state_v2';
@@ -406,7 +406,15 @@ async function boot(){
 }
 
 start();
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(()=>{}); }
+// service worker отключён: он отдавал устаревшую страницу из кэша
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations()
+    .then(rs => rs.forEach(r => r.unregister()))
+    .catch(() => {});
+  if (window.caches) {
+    caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(() => {});
+  }
+}
 </script>
 </body>
 </html>
