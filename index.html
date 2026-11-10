@@ -50,9 +50,8 @@
   .empty{color:var(--muted);text-align:center;padding:40px 10px}
   footer{position:fixed;bottom:0;left:0;right:0;background:rgba(15,18,32,.95);border-top:1px solid var(--line);
     padding:8px 14px;font-size:11px;color:var(--muted);text-align:center}
-  .banner{position:sticky;top:0;z-index:20;background:linear-gradient(90deg,#1f3a2a,#22402e);color:#bff3d0;
-    font-size:12px;padding:7px 14px;text-align:center;border-bottom:1px solid #2f5a41}
-  .banner.warn{background:linear-gradient(90deg,#3a2f1f,#402e22);color:#ffd79a;border-bottom-color:#5a462f}
+  .trial-badge{position:fixed;top:10px;right:12px;z-index:60;background:rgba(31,58,42,.95);color:#bff3d0;border:1px solid #2f5a41;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+  .trial-badge.warn{background:rgba(58,47,31,.95);color:#ffd79a;border-color:#5a462f}
   .gate{position:fixed;inset:0;z-index:100;background:radial-gradient(1200px 600px at 50% -10%,#1b2238,#0b0e18 70%);
     display:flex;align-items:center;justify-content:center;padding:22px}
   .gate-card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:18px;
@@ -66,7 +65,7 @@
 </style>
 </head>
 <body>
-<div id="trialBanner" class="banner" hidden></div>
+<div id="trialBanner" class="trial-badge" hidden></div>
 <header>
   <h1>Авито-Финдер <span class="sub" id="city">Сыктывкар</span></h1>
   <div class="sub" id="updated">загрузка…</div>
@@ -193,11 +192,14 @@ function showTrialBanner(leftMs) {
   const tick = () => {
     const left = leftMs - (Date.now() - startedAt);
     if (left <= 0) { location.reload(); return; }
-    el.className = 'banner' + (left < DAY ? ' warn' : '');
-    el.textContent = 'Пробный доступ — осталось ' + fmtLeft(left);
+    const days = left / DAY;
+    el.className = 'trial-badge' + (days < 3 ? ' warn' : '');
+    el.textContent = days >= 1
+      ? 'осталось ' + Math.ceil(days) + ' дн'
+      : 'осталось ' + Math.max(1, Math.round(left / 3600000)) + ' ч';
   };
   tick();
-  setInterval(tick, 30000);
+  setInterval(tick, 60000);
 }
 
 function showGate(reason) {
