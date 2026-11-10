@@ -119,7 +119,7 @@ const state = {data:null, type:'all'};
 const $ = id => document.getElementById(id);
 
 /* ---------------- доступ: серверный триал (Cloudflare Worker) ---------------- */
-const BUILD = 'v6';
+const BUILD = 'v7';
 const WORKER = 'https://avito-finder-trial.artemfromkomi024.workers.dev';
 const LS_DEV = 'avito_device';
 const LS_STATE = 'avito_state_v2';
@@ -135,13 +135,21 @@ function deviceId() {
 }
 
 async function api(path, body) {
-  const res = await fetch(WORKER + path, body ? {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body)
-  } : {});
-  if (!res.ok) { const e = new Error('http ' + res.status); e.status = res.status; throw e; }
-  return res.json();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const opts = { signal: ctrl.signal };
+    if (body) {
+      opts.method = 'POST';
+      opts.headers = { 'content-type': 'application/json' };
+      opts.body = JSON.stringify(body);
+    }
+    const res = await fetch(WORKER + path, opts);
+    if (!res.ok) { const e = new Error('http ' + res.status); e.status = res.status; throw e; }
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function cacheState(obj) { localStorage.setItem(LS_STATE, JSON.stringify(Object.assign({}, obj, { savedAt: Date.now() }))); }
@@ -225,6 +233,7 @@ function showGate(reason) {
   };
   $('gateBtn').addEventListener('click', submit);
   $('gateInput').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+  $('gateErr').textContent = 'сборка ' + BUILD;
 }
 
 async function start() {
