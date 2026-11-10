@@ -119,7 +119,7 @@ const state = {data:null, type:'all'};
 const $ = id => document.getElementById(id);
 
 /* ---------------- доступ: полностью локально, без сервера ---------------- */
-const BUILD = 'v11';
+const BUILD = 'v12';
 const SALT = 'AF-2026-salt';
 const LS_STATE = 'avito_state_v3';
 const DAY = 86400000;
@@ -232,6 +232,7 @@ function showBadge(ms) {
 function showGate(expired) {
   const gate = $('gate');
   gate.hidden = false;
+  if (!expired) $('gateTitle').textContent = 'Доступ по коду · ' + BUILD;
   if (expired) {
     $('gateTitle').textContent = 'Доступ истёк';
     $('gateText').textContent = 'Введи новый код от владельца приложения.';
