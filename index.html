@@ -50,9 +50,23 @@
   .empty{color:var(--muted);text-align:center;padding:40px 10px}
   footer{position:fixed;bottom:0;left:0;right:0;background:rgba(15,18,32,.95);border-top:1px solid var(--line);
     padding:8px 14px;font-size:11px;color:var(--muted);text-align:center}
+  .banner{position:sticky;top:0;z-index:20;background:linear-gradient(90deg,#1f3a2a,#22402e);color:#bff3d0;
+    font-size:12px;padding:7px 14px;text-align:center;border-bottom:1px solid #2f5a41}
+  .banner.warn{background:linear-gradient(90deg,#3a2f1f,#402e22);color:#ffd79a;border-bottom-color:#5a462f}
+  .gate{position:fixed;inset:0;z-index:100;background:radial-gradient(1200px 600px at 50% -10%,#1b2238,#0b0e18 70%);
+    display:flex;align-items:center;justify-content:center;padding:22px}
+  .gate-card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:22px 20px;text-align:center}
+  .gate-card h2{margin:0 0 8px;font-size:19px}
+  .gate-card p{margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.5}
+  .gate-card input{text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+  .gate-card button{width:100%;padding:11px;border:0;border-radius:12px;background:var(--accent);color:#07130c;
+    font-weight:700;font-size:15px;cursor:pointer}
+  .gate-err{color:var(--bad);font-size:12px;min-height:16px;margin-top:6px}
 </style>
 </head>
 <body>
+<div id="trialBanner" class="banner" hidden></div>
 <header>
   <h1>Авито-Финдер <span class="sub" id="city">Сыктывкар</span></h1>
   <div class="sub" id="updated">загрузка…</div>
@@ -90,10 +104,93 @@
 
 <footer>Оценка рынка — медиана цен похожих объявлений. Не оферта, перепроверяй вручную.</footer>
 
+<div id="gate" class="gate" hidden>
+  <div class="gate-card">
+    <h2 id="gateTitle">Доступ по коду</h2>
+    <p id="gateText">Введи код, который дал владелец приложения.</p>
+    <input id="gateInput" type="text" placeholder="КОД" autocomplete="off">
+    <button id="gateBtn">Войти</button>
+    <div class="gate-err" id="gateErr"></div>
+  </div>
+</div>
+
 <script>
 const state = {data:null, type:'all'};
 
 const $ = id => document.getElementById(id);
+
+/* ---------------- доступ: пробный период / бессрочный ---------------- */
+const ACCESS_CODES = { 'FRIEND-3D': 3, 'OWNER': 0 }; // значение — дней, 0 = бессрочно
+const LS_KEY = 'avito_access_v1';
+const DAY = 86400000;
+
+function readAccess() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) { return null; }
+}
+function applyCode(raw) {
+  const code = (raw || '').trim().toUpperCase();
+  if (!(code in ACCESS_CODES)) return false;
+  const days = ACCESS_CODES[code];
+  localStorage.setItem(LS_KEY, JSON.stringify({ code, days, start: Date.now() }));
+  return true;
+}
+function checkAccess() {
+  const a = readAccess();
+  if (!a) return { ok: false, reason: 'none' };
+  if (!a.days) return { ok: true, a };
+  const left = a.start + a.days * DAY - Date.now();
+  return left > 0 ? { ok: true, a, leftMs: left } : { ok: false, reason: 'expired', a };
+}
+function fmtLeft(ms) {
+  const d = Math.floor(ms / DAY);
+  const h = Math.floor((ms % DAY) / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return (d ? d + ' д ' : '') + h + ' ч ' + m + ' мин';
+}
+function showTrialBanner(leftMs) {
+  const el = $('trialBanner');
+  el.hidden = false;
+  const tick = () => {
+    const left = leftMs - (Date.now() - startedAt);
+    if (left <= 0) { location.reload(); return; }
+    el.className = 'banner' + (left < DAY ? ' warn' : '');
+    el.textContent = 'Пробный доступ — осталось ' + fmtLeft(left);
+  };
+  const startedAt = Date.now();
+  tick();
+  setInterval(tick, 30000);
+}
+function showGate(reason) {
+  const gate = $('gate');
+  gate.hidden = false;
+  if (reason === 'expired') {
+    $('gateTitle').textContent = 'Пробный период закончился';
+    $('gateText').textContent = 'Трёхдневный доступ истёк. Напиши владельцу приложения, чтобы продлить.';
+  }
+  const submit = () => {
+    if (applyCode($('gateInput').value)) {
+      gate.hidden = true;
+      start();
+    } else {
+      $('gateErr').textContent = 'Код не подходит';
+    }
+  };
+  $('gateBtn').addEventListener('click', submit);
+  $('gateInput').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+}
+
+function start() {
+  const url = new URL(location.href);
+  const code = url.searchParams.get('code');
+  if (code && applyCode(code)) {
+    url.searchParams.delete('code');
+    history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
+  }
+  const acc = checkAccess();
+  if (!acc.ok) { showGate(acc.reason); return; }
+  if (acc.a.days) showTrialBanner(acc.leftMs);
+  boot();
+}
 
 function median(a){ if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y); const m=s.length>>1;
   return s.length%2 ? s[m] : (s[m-1]+s[m])/2; }
@@ -245,7 +342,7 @@ async function boot(){
   applyFilters();
 }
 
-boot();
+start();
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 </script>
 </body>
