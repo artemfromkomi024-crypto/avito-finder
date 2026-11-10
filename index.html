@@ -181,7 +181,8 @@ function applyFilters(){
 
   render(list);
   const good = list.filter(i => i.est.discount >= 0.4).length;
-  $('stats').textContent = `Найдено: ${list.length} · выгодных (≥40% к рынку): ${good} · медиана рынка: ${fmt(Math.round(model.allMedian))}`;
+  const fakes = list.filter(i => i.fake).length;
+  $('stats').textContent = `Найдено: ${list.length} · выгодных (≥40%): ${good} · паль/без бренда: ${fakes} · медиана рынка: ${fmt(Math.round(model.allMedian))}`;
   $('empty').hidden = list.length > 0;
 }
 
@@ -206,7 +207,7 @@ function render(list){
           <div class="meta">
             <span class="tag">${it.brand}</span>
             ${it.size ? `<span class="tag">${it.size}</span>` : ''}
-            ${it.fake ? '<span class="tag fake">паль</span>' : ''}
+            ${it.fake ? '<span class="tag fake">паль · нет бренда</span>' : ''}
             ${it.condition === 'new' ? '<span class="tag">новое</span>' : ''}
           </div>
           <div class="price">${fmt(it.price)}</div>
