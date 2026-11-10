@@ -168,16 +168,14 @@ async function resolveAccess() {
 async function submitCode(raw) {
   const code = (raw || '').trim().toUpperCase();
   if (!code) return false;
-  if (code === 'OWNER-2026') {
-    await api('/claim', { device: deviceId(), code });
-    cacheState({ permanent: true });
-    return true;
+  let r;
+  try {
+    r = await api('/redeem', { device: deviceId(), code: code });
+  } catch (e) {
+    return false;               // 403 — код неверный, и клиент о кодах ничего не знает
   }
-  if (code === 'FRIEND-3D') {
-    const r = await api('/trial', { device: deviceId() });
-    if (r.permanent) { cacheState({ permanent: true }); return true; }
-    if (r.leftMs > 0) { cacheState({ leftMs: r.leftMs }); return true; }
-  }
+  if (r.permanent) { cacheState({ permanent: true }); return true; }
+  if (r.leftMs > 0) { cacheState({ leftMs: r.leftMs }); return true; }
   return false;
 }
 
