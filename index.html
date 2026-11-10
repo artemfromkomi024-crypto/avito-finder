@@ -118,16 +118,15 @@ const state = {data:null, type:'all'};
 
 const $ = id => document.getElementById(id);
 
-/* ---------------- доступ: серверный триал (Cloudflare Worker) ---------------- */
-const BUILD = 'v10';
-const WORKER = 'https://avito-finder-trial.artemfromkomi024.workers.dev';
-const LS_DEV = 'avito_device';
-const LS_STATE = 'avito_state_v2';
+/* ---------------- доступ: полностью локально, без сервера ---------------- */
+const BUILD = 'v11';
+const SALT = 'AF-2026-salt';
+const LS_STATE = 'avito_state_v3';
 const DAY = 86400000;
 
-/* офлайн-проверка кодов: sha256(КОД|соль) -> дни */
+/* sha256(КОД|соль) -> сколько дней даёт код (0 = бессрочно) */
 const CODE_HASHES = {
-  "61e751df2556de95d38cc9d25075abcff42fc25f67eb25da20f478f3e08194eb": 3,
+"61e751df2556de95d38cc9d25075abcff42fc25f67eb25da20f478f3e08194eb": 3,
   "d8ba06eab468a7a1f3e9bc4d5f92b25da5e69b9b5495d38868400eac5aa8cc99": 3,
   "efe0c3c954a4755ac00c55a864c19ddfaf3f2c20f8071bf7547475a3764540d5": 3,
   "3ac722dedb1374c364e9b8298e9883bfa11072430c6f8fe8803e76ca65a7c2be": 3,
@@ -173,108 +172,50 @@ const CODE_HASHES = {
   "9f346b1ff9efa44e5f15c313030b0334544741756d623c8d9ad1e3b728381b22": 90
 };
 
-function deviceId() {
-  let d = localStorage.getItem(LS_DEV);
-  if (!d) {
-    d = (crypto.randomUUID ? crypto.randomUUID() : 'dev-' + Math.random().toString(36).slice(2) + Date.now().toString(36));
-    localStorage.setItem(LS_DEV, d);
-  }
-  return d;
-}
-
-async function api(path, body) {
-  const ctrl = new AbortController();
-  const abort = setTimeout(() => ctrl.abort(), 6000);
-  const hardTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 6500));
-  try {
-    const opts = { signal: ctrl.signal };
-    if (body) {
-      opts.method = 'POST';
-      opts.headers = { 'content-type': 'application/json' };
-      opts.body = JSON.stringify(body);
-    }
-    const res = await Promise.race([fetch(WORKER + path, opts), hardTimeout]);
-    if (!res.ok) { const e = new Error('http ' + res.status); e.status = res.status; throw e; }
-    return await Promise.race([res.json(), new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 4000))]);
-  } finally {
-    clearTimeout(abort);
-  }
-}
-
-function cacheState(obj) { localStorage.setItem(LS_STATE, JSON.stringify(Object.assign({}, obj, { savedAt: Date.now() }))); }
-function cachedState() { try { return JSON.parse(localStorage.getItem(LS_STATE) || 'null'); } catch (e) { return null; } }
-
-async function resolveAccess() {
-  const cached = cachedState();
-  try {
-    const r = await api('/status?device=' + encodeURIComponent(deviceId()));
-    if (r.permanent) { cacheState({ permanent: true }); return { ok: true }; }
-    if (r.leftMs > 0) { cacheState({ leftMs: r.leftMs }); return { ok: true, leftMs: r.leftMs }; }
-    return { ok: false, reason: cached ? 'expired' : 'none' };
-  } catch (e) {
-    if (cached && cached.permanent) return { ok: true, offline: true };
-    if (cached && cached.leftMs) {
-      const left = cached.leftMs - (Date.now() - cached.savedAt);
-      if (left > 0) return { ok: true, leftMs: left, offline: true };
-      return { ok: false, reason: 'expired' };
-    }
-    return { ok: false, reason: 'offline' };
-  }
-}
-
-/** 'ok' | 'bad' | 'offline' */
 async function sha256hex(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** 'ok' | 'bad' | 'offline' */
-async function sha256hex(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+function readState() {
+  try { return JSON.parse(localStorage.getItem(LS_STATE) || 'null'); } catch (e) { return null; }
 }
+function writeState(obj) { localStorage.setItem(LS_STATE, JSON.stringify(obj)); }
 
-/** 'ok' | 'bad' | 'offline' */
-async function sha256hex(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-/** 'ok' | 'bad' | 'offline' */
-async function submitCode(raw) {
+/* возвращает true, если код подошёл */
+async function redeem(raw) {
   const code = (raw || '').trim().toUpperCase();
-  if (!code) return 'bad';
+  if (!code) return false;
+  let h;
+  try { h = await sha256hex(code + '|' + SALT); } catch (e) { return false; }
+  const days = CODE_HASHES[h];
+  if (days === undefined) return false;
 
-  try {
-    const r = await api('/redeem', { device: deviceId(), code: code });
-    if (r.permanent) { cacheState({ permanent: true }); return 'ok'; }
-    if (r.leftMs > 0) { cacheState({ leftMs: r.leftMs }); return 'ok'; }
-    return 'bad';
-  } catch (e) {
-    if (e.status === 403) return 'bad';
-  }
+  const st = readState();
+  if (st && st.permanent) return true;
 
-  // сервер недоступен — проверяем код офлайн по хешам
-  try {
-    const h = await sha256hex(code + '|AF-2026-salt');
-    const days = CODE_HASHES[h];
-    if (days) {
-      cacheState({ leftMs: days * DAY });
-      localStorage.setItem('avito_offline_code', code);
-      return 'ok';
-    }
-    return 'bad';
-  } catch (e) {
-    return 'offline';
-  }
+  if (days === 0) { writeState({ permanent: true }); return true; }
+
+  const now = Date.now();
+  const base = Math.max(now, (st && st.end) || 0);
+  writeState({ end: base + days * DAY });
+  return true;
 }
 
-function showTrialBanner(leftMs) {
+function leftMs() {
+  const st = readState();
+  if (!st) return 0;
+  if (st.permanent) return null;
+  return Math.max(0, (st.end || 0) - Date.now());
+}
+
+function showBadge(ms) {
   const el = $('trialBanner');
   el.hidden = false;
+  if (ms === null) { el.className = 'trial-badge'; el.textContent = 'доступ бессрочный'; return; }
   const startedAt = Date.now();
   const tick = () => {
-    const left = leftMs - (Date.now() - startedAt);
+    const left = ms - (Date.now() - startedAt);
     if (left <= 0) { location.reload(); return; }
     const days = left / DAY;
     el.className = 'trial-badge' + (days < 3 ? ' warn' : '');
@@ -286,50 +227,56 @@ function showTrialBanner(leftMs) {
   setInterval(tick, 60000);
 }
 
-function showGate(reason) {
+function showGate(expired) {
   const gate = $('gate');
   gate.hidden = false;
-  if (reason === 'expired') {
+  if (expired) {
     $('gateTitle').textContent = 'Доступ истёк';
-    $('gateText').textContent = 'Срок доступа закончился. Введи новый код от владельца приложения.';
-  } else if (reason === 'offline') {
-    $('gateTitle').textContent = 'Нет связи с сервером';
-    $('gateText').textContent = 'Проверь интернет и обнови страницу. Если не помогает — сервер недоступен из твоей сети.';
-    $('gateErr').textContent = 'сборка ' + BUILD;
+    $('gateText').textContent = 'Введи новый код от владельца приложения.';
   }
+  $('gateErr').textContent = 'сборка ' + BUILD;
+
   const submit = async () => {
-    $('gateErr').textContent = 'проверяю…';
     const btn = $('gateBtn');
     btn.disabled = true;
+    $('gateErr').textContent = 'проверяю…';
     try {
-      const res = await submitCode($('gateInput').value);
-      if (res === 'ok') { gate.hidden = true; start(); return; }
-      $('gateErr').textContent = res === 'offline'
-        ? 'Нет связи с сервером (код не проверен). Сборка ' + BUILD
-        : 'Код не подходит или уже использован. Сборка ' + BUILD;
+      if (await redeem($('gateInput').value)) {
+        gate.hidden = true;
+        start();
+      } else {
+        $('gateErr').textContent = 'Код не подходит. Сборка ' + BUILD;
+      }
+    } catch (e) {
+      $('gateErr').textContent = 'Ошибка: ' + e.message + '. Сборка ' + BUILD;
     } finally {
       btn.disabled = false;
     }
   };
   $('gateBtn').addEventListener('click', submit);
   $('gateInput').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
-  $('gateErr').textContent = 'сборка ' + BUILD;
 }
 
-async function start() {
+function start() {
   const url = new URL(location.href);
   const code = url.searchParams.get('code');
   if (code) {
-    try {
-      if (await submitCode(code) === 'ok') {
+    redeem(code).then(ok => {
+      if (ok) {
         url.searchParams.delete('code');
         history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
       }
-    } catch (e) { /* ниже покажем состояние */ }
+      afterCode();
+    });
+  } else {
+    afterCode();
   }
-  const acc = await resolveAccess();
-  if (!acc.ok) { showGate(acc.reason); return; }
-  if (acc.leftMs) showTrialBanner(acc.leftMs);
+}
+
+function afterCode() {
+  const left = leftMs();
+  if (left === 0) { showGate(readState() !== null); return; }
+  showBadge(left);
   boot();
   const f = document.querySelector('footer');
   if (f && !f.textContent.includes('сборка')) f.textContent += ' · сборка ' + BUILD;
