@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Авито-Финдер · Сыктывкар</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1220">
+<style>
+  :root{
+    --bg:#0f1220; --card:#181c2e; --card2:#1f2438; --line:#2b3149;
+    --text:#e9edfb; --muted:#98a0bd; --accent:#5ee08a; --warn:#ffb84d; --bad:#ff6b6b; --blue:#6ea8ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,Segoe UI,Roboto,Arial,sans-serif;padding-bottom:80px}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#0f1220 70%,rgba(15,18,32,.92));border-bottom:1px solid var(--line);padding:12px 14px 10px}
+  h1{font-size:17px;margin:0 0 2px}
+  .sub{color:var(--muted);font-size:12px}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .controls .wide{grid-column:1 / -1}
+  select,input[type=number],input[type=search]{
+    width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);
+    border-radius:10px;padding:9px 10px;font-size:14px;outline:none
+  }
+  .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{white-space:nowrap;background:var(--card2);border:1px solid var(--line);color:var(--muted);
+    padding:7px 12px;border-radius:999px;font-size:13px;cursor:pointer}
+  .chip.on{background:rgba(94,224,138,.14);border-color:rgba(94,224,138,.5);color:var(--accent)}
+  .toggles{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  label.t{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);
+    background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer}
+  label.t input{accent-color:var(--accent)}
+  .stats{color:var(--muted);font-size:12px;margin-top:8px}
+  main{padding:12px 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  .thumb{aspect-ratio:1/1;background:#0b0e18 center/cover no-repeat;position:relative;display:flex;align-items:center;justify-content:center;color:#3a4160;font-size:12px}
+  .badge{position:absolute;top:8px;left:8px;background:rgba(10,12,20,.82);border-radius:8px;padding:3px 7px;font-size:12px;font-weight:600}
+  .badge.good{color:var(--accent)} .badge.mid{color:var(--warn)} .badge.bad{color:var(--bad)}
+  .body{padding:9px 10px 11px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .title{font-size:13px;line-height:1.3;max-height:3.4em;overflow:hidden}
+  .meta{display:flex;gap:5px;flex-wrap:wrap}
+  .tag{font-size:11px;color:var(--muted);background:#141828;border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+  .tag.fake{color:var(--warn);border-color:rgba(255,184,77,.35)}
+  .price{font-size:16px;font-weight:700;margin-top:auto}
+  .est{font-size:11px;color:var(--muted)}
+  .est b{color:var(--text);font-weight:600}
+  a.cardlink{color:inherit;text-decoration:none}
+  .empty{color:var(--muted);text-align:center;padding:40px 10px}
+  footer{position:fixed;bottom:0;left:0;right:0;background:rgba(15,18,32,.95);border-top:1px solid var(--line);
+    padding:8px 14px;font-size:11px;color:var(--muted);text-align:center}
+  .trial-badge{position:fixed;top:10px;right:12px;z-index:60;background:rgba(31,58,42,.95);color:#bff3d0;border:1px solid #2f5a41;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+  .trial-badge.warn{background:rgba(58,47,31,.95);color:#ffd79a;border-color:#5a462f}
+  .gate{position:fixed;inset:0;z-index:100;background:radial-gradient(1200px 600px at 50% -10%,#1b2238,#0b0e18 70%);
+    display:flex;align-items:center;justify-content:center;padding:22px}
+  .gate-card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:22px 20px;text-align:center}
+  .gate-card h2{margin:0 0 8px;font-size:19px}
+  .gate-card p{margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.5}
+  .gate-card input{text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+  .gate-card button{width:100%;padding:11px;border:0;border-radius:12px;background:var(--accent);color:#07130c;
+    font-weight:700;font-size:15px;cursor:pointer}
+  .gate-err{color:var(--bad);font-size:12px;min-height:16px;margin-top:6px}
+</style>
+</head>
+<body>
+<div id="trialBanner" class="trial-badge" hidden></div>
+<header>
+  <h1>Авито-Финдер <span class="sub" id="city">Сыктывкар</span></h1>
+  <div class="sub" id="updated">загрузка…</div>
+
+  <div class="controls">
+    <input class="wide" id="q" type="search" placeholder="Поиск по названию (например, stone island)">
+    <select id="cat"></select>
+    <select id="brand"></select>
+    <select id="size"></select>
+    <select id="sort">
+      <option value="discount">Сначала выгодные</option>
+      <option value="price">Сначала дешёвые</option>
+      <option value="profit">Сначала прибыльные</option>
+      <option value="new">Сначала новые</option>
+    </select>
+    <input id="pmin" type="number" placeholder="Цена от" value="1000">
+    <input id="pmax" type="number" placeholder="Цена до" value="20000">
+  </div>
+
+  <div class="chips" id="typeChips">
+    <div class="chip on" data-type="all">Все</div>
+    <div class="chip" data-type="orig">Оригинал</div>
+    <div class="chip" data-type="fake">Паль</div>
+  </div>
+
+  <div class="toggles">
+    <label class="t"><input type="checkbox" id="photoOnly" checked> только с фото</label>
+    <label class="t"><input type="checkbox" id="newOnly"> только новое</label>
+  </div>
+
+  <div class="stats" id="stats"></div>
+</header>
+
+<main><div class="grid" id="grid"></div><div class="empty" id="empty" hidden>Ничего не найдено — ослабь фильтры</div></main>
+
+<footer>Оценка рынка — медиана цен похожих объявлений. Не оферта, перепроверяй вручную.</footer>
+
+<div id="gate" class="gate" hidden>
+  <div class="gate-card">
+    <h2 id="gateTitle">Доступ по коду</h2>
+    <p id="gateText">Введи код, который дал владелец приложения.</p>
+    <input id="gateInput" type="text" placeholder="КОД" autocomplete="off">
+    <button id="gateBtn">Войти</button>
+    <div class="gate-err" id="gateErr"></div>
+  </div>
+</div>
+
+<script>
+const state = {data:null, type:'all'};
+
+const $ = id => document.getElementById(id);
+
+/* ---------------- доступ: полностью локально, без сервера ---------------- */
+const BUILD = 'v11';
+const SALT = 'AF-2026-salt';
+const LS_STATE = 'avito_state_v3';
+const DAY = 86400000;
+
+/* sha256(КОД|соль) -> сколько дней даёт код (0 = бессрочно) */
+const CODE_HASHES = {
+"c0ad0e3ba9bc13c17fc6e006ac28a2877edf79b6bd3e8b18425a89be1db9ce37": 3,
+"2f2eb7604a272525f9701c413b6fd22a6ef0748d44b536be5b42199ab36e29b9": 3,
+"61e751df2556de95d38cc9d25075abcff42fc25f67eb25da20f478f3e08194eb": 3,
+  "d8ba06eab468a7a1f3e9bc4d5f92b25da5e69b9b5495d38868400eac5aa8cc99": 3,
+  "efe0c3c954a4755ac00c55a864c19ddfaf3f2c20f8071bf7547475a3764540d5": 3,
+  "3ac722dedb1374c364e9b8298e9883bfa11072430c6f8fe8803e76ca65a7c2be": 3,
+  "9ad745ceb813bb0367e97eb00cb9acb8e682779bb64fc77bb418aa4574f7cff4": 3,
+  "e47db66e0c196a9d9db1e9f987432bfb61dfb1c8e769fb3b103c29f67e7fd347": 3,
+  "61fdebc8cbdba72c338b1a6b6d843ba0d0d5c7175d762f3b6aacb561cf89eea1": 3,
+  "6ba166a3bdf168125d21f476d2ed6305426fc755de7456b9cbeb05c3f6bbc41d": 3,
+  "18495aebecbe293bf17d7dc2fe37a3f4f8fca618b07f42a19e1d8208a824528c": 3,
+  "18357b3c41369fa76afe50dac013540c8c73d81d4119b88af0b243dbf910ca3f": 3,
+  "6315c30ab567d6364cced1de3c0912a7997ac66cf84a19edb27dd48c3518a05a": 3,
+  "a75f3cce060c53fe45f0f232c7754aa21713599b198dea94c7f13fb4e960cf75": 3,
+  "d83c521d1fa8539940501d6a4798fe84ef1a9f48a7bdfaac969628fe4de87035": 3,
+  "b254cc4d391ea241f7b1a967729c050e23127af9a95b2c403393cf4380c81239": 3,
+  "21173c832c4b8215e82d8524d762fc561ad0bfdc6b706accb419709f548d85ba": 3,
+  "c143ca51eebd715dd7a51d201a29361de2a44696e296471ba140a8d8f5d67f58": 3,
+  "70c117913cdf365841be66d1861dca903bdc3be3e5a911d25afba6a17f2ba48b": 3,
+  "e642fdc145558f8d77115ce4a489baa5953334269f791b4aaa5cec3f0fc2392b": 3,
+  "27152da482b8d5da6860d140b44f6940378e7c006aa9b1971d8cc00c55dd92a7": 3,
+  "425ad7aa6ef808fd4cf82ced004b17c9be05afd9461c1da76ddfc1a087710d30": 30,
+  "14cfadbde9cec8d4daf113f407733428d8e60f70e34129e8416285be67894708": 30,
+  "506adb117258ef1098818dc01e1735a8116f664a398030c7b14e91634fa9950c": 30,
+  "271ce29b9ce66572dea039b9dfc49ffeb7f01e3b8aeb7995d313598a5b963bd4": 30,
+  "26dc42624423b64882ddd5fd3bb3b42b10b0324d4e71f244e80cd7b7880f769c": 30,
+  "d92813965be1a412a3b52a3065015fae17e790fa9d49ac60b7494c1977bf85cf": 30,
+  "105a7d3b86946930a78e1e958dc256f66e2264a40086367c66fe91af846f3ab5": 30,
+  "4471c46671c7cf78b9a06c3879789c84c0916d5b4c8f727bb1235a58354623dd": 30,
+  "1b012763e980ddca64940d7db436fd6477eba8a9cecce382d24d7ce43c4b45d8": 30,
+  "6270804751f8e5f4bb7b0af5a2840532bb945ecbb13fc9b89b6d666ef3e0a712": 30,
+  "f886cd062366ee65b2ee41999ecc7e2b9e506d5ec46a4506fc2c2b1f4b3a1a07": 30,
+  "f133259dcda8b9049ce823b89f4ddbd141955952bf63b1b83b58bc673b8e79a3": 30,
+  "4ab7e056b005abf1370a638a55466820d0b07aa7d4e46b9030b610323f2b6877": 90,
+  "548d91774f47a45df39a0fd587128111b0106008bb824dd92e51d01640e93892": 90,
+  "f4f6e6d4fc8ce0984725672de9c996a0960d8658feb73ad5df4631858fd19197": 90,
+  "7c9f8b08a0cdda17481d0a668e4a98c52447154f4551a45dd703ed0c6d64b594": 90,
+  "f06d305653d0aa858a784a2d48f73c72433e3243c1a4f3bf82fe52d9cc52bc8d": 90,
+  "19246e6cef6187f18a75b9ceef0e1a176e1be939acc6251ae5e8ba16823704b0": 90,
+  "731d993c14fb2020a80e3e37bbff4a7b4575cc287dbb17f439699375ea545a02": 90,
+  "ff91316b8d01bde24e961f95235ef234c573aafd00f71502d4637820e70f6a70": 90,
+  "6b2d8552e3b970a74e354c8315839f53409656b13ef0a4eea64d8f31a4153691": 90,
+  "f0c2956e2ad61ae75b0f8353920b2a73650cbffa73398ae9841cfec2e61b79fe": 90,
+  "1d4e15224d316b1c62e10f5cbd632135ea4616d470e4fab15e30986b5684265b": 90,
+  "c885cdc1ad1c3358db75956db67876b4f7b545a91b7bf22d49055bfe89e8a3ed": 90,
+  "9f346b1ff9efa44e5f15c313030b0334544741756d623c8d9ad1e3b728381b22": 90
+};
+
+async function sha256hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function readState() {
+  try { return JSON.parse(localStorage.getItem(LS_STATE) || 'null'); } catch (e) { return null; }
+}
+function writeState(obj) { localStorage.setItem(LS_STATE, JSON.stringify(obj)); }
+
+/* возвращает true, если код подошёл */
+async function redeem(raw) {
+  const code = (raw || '').trim().toUpperCase();
+  if (!code) return false;
+  let h;
+  try { h = await sha256hex(code + '|' + SALT); } catch (e) { return false; }
+  const days = CODE_HASHES[h];
+  if (days === undefined) return false;
+
+  const st = readState();
+  if (st && st.permanent) return true;
+
+  if (days === 0) { writeState({ permanent: true }); return true; }
+
+  const now = Date.now();
+  const base = Math.max(now, (st && st.end) || 0);
+  writeState({ end: base + days * DAY });
+  return true;
+}
+
+function leftMs() {
+  const st = readState();
+  if (!st) return 0;
+  if (st.permanent) return null;
+  return Math.max(0, (st.end || 0) - Date.now());
+}
+
+function showBadge(ms) {
+  const el = $('trialBanner');
+  el.hidden = false;
+  if (ms === null) { el.className = 'trial-badge'; el.textContent = 'доступ бессрочный'; return; }
+  const startedAt = Date.now();
+  const tick = () => {
+    const left = ms - (Date.now() - startedAt);
+    if (left <= 0) { location.reload(); return; }
+    const days = left / DAY;
+    el.className = 'trial-badge' + (days < 3 ? ' warn' : '');
+    el.textContent = days >= 1
+      ? 'осталось ' + Math.ceil(days) + ' дн'
+      : 'осталось ' + Math.max(1, Math.round(left / 3600000)) + ' ч';
+  };
+  tick();
+  setInterval(tick, 60000);
+}
+
+function showGate(expired) {
+  const gate = $('gate');
+  gate.hidden = false;
+  if (expired) {
+    $('gateTitle').textContent = 'Доступ истёк';
+    $('gateText').textContent = 'Введи новый код от владельца приложения.';
+  }
+  $('gateErr').textContent = 'сборка ' + BUILD;
+
+  const submit = async () => {
+    const btn = $('gateBtn');
+    btn.disabled = true;
+    $('gateErr').textContent = 'проверяю…';
+    try {
+      if (await redeem($('gateInput').value)) {
+        gate.hidden = true;
+        start();
+      } else {
+        $('gateErr').textContent = 'Код не подходит. Сборка ' + BUILD;
+      }
+    } catch (e) {
+      $('gateErr').textContent = 'Ошибка: ' + e.message + '. Сборка ' + BUILD;
+    } finally {
+      btn.disabled = false;
+    }
+  };
+  $('gateBtn').addEventListener('click', submit);
+  $('gateInput').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+}
+
+function start() {
+  const url = new URL(location.href);
+  const code = url.searchParams.get('code');
+  if (code) {
+    redeem(code).then(ok => {
+      if (ok) {
+        url.searchParams.delete('code');
+        history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
+      }
+      afterCode();
+    });
+  } else {
+    afterCode();
+  }
+}
+
+function afterCode() {
+  const left = leftMs();
+  if (left === 0) { showGate(readState() !== null); return; }
+  showBadge(left);
+  boot();
+  const f = document.querySelector('footer');
+  if (f && !f.textContent.includes('сборка')) f.textContent += ' · сборка ' + BUILD;
+}
+
+function median(a){ if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y); const m=s.length>>1;
+  return s.length%2 ? s[m] : (s[m-1]+s[m])/2; }
+
+// ---------- "неиронка": статистическая оценка рынка ----------
+function buildModel(items){
+  const byKey = new Map();   // cat|brand|type -> prices
+  const byCat = new Map();   // cat -> prices
+  const all = [];
+  for(const it of items){
+    const type = it.fake ? 'fake' : 'orig';
+    const k1 = `${it.category}|${it.brand}|${type}`;
+    const k2 = `${it.category}|${type}`;
+    if(!byKey.has(k1)) byKey.set(k1, []);
+    byKey.get(k1).push(it.price);
+    if(!byCat.has(k2)) byCat.set(k2, []);
+    byCat.get(k2).push(it.price);
+    all.push(it.price);
+  }
+  return {byKey, byCat, allMedian: median(all)};
+}
+
+function estimateMarket(item, model){
+  const type = item.fake ? 'fake' : 'orig';
+  const k1 = `${item.category}|${item.brand}|${type}`;
+  const k2 = `${item.category}|${type}`;
+  const g1 = model.byKey.get(k1) || [];
+  let est, basis;
+  if(g1.length >= 3){ est = median(g1); basis = `по ${g1.length} похожим (${type})`; }
+  else {
+    const g2 = model.byCat.get(k2) || [];
+    if(g2.length >= 3){ est = median(g2); basis = `по категории (${type})`; }
+    else { est = model.allMedian * (item.fake ? 0.6 : 1); basis = 'по всему рынку'; }
+  }
+  // скидка к рынку
+  const discount = est > 0 ? 1 - item.price / est : 0;
+  // сколько останется при перепродаже: берём 80% медианы (торг) минус 5% на продвижение
+  const resale = est * 0.80 * 0.95;
+  const profit = Math.round(resale - item.price);
+  const score = Math.round(Math.max(0, Math.min(1, discount)) * 100);
+  return {market: Math.round(est), discount, profit, score, basis};
+}
+
+// ---------- рендер ----------
+function fillSelect(el, values, placeholder, current){
+  el.innerHTML = '';
+  const o = document.createElement('option'); o.value=''; o.textContent=placeholder; el.appendChild(o);
+  for(const v of values){ const x=document.createElement('option'); x.value=v; x.textContent=v; el.appendChild(x); }
+  el.value = current || '';
+}
+
+function fmt(n){ return n.toLocaleString('ru-RU') + ' ₽'; }
+
+function applyFilters(){
+  if(!state.data) return;
+  const items = state.data.items;
+  const q = $('q').value.trim().toLowerCase();
+  const cat = $('cat').value, brand = $('brand').value, size = $('size').value;
+  const pmin = +$('pmin').value || 0, pmax = +$('pmax').value || Infinity;
+  const photoOnly = $('photoOnly').checked, newOnly = $('newOnly').checked;
+
+  const model = state.model;
+  let list = items.map(it => ({...it, est: estimateMarket(it, model)}));
+
+  list = list.filter(it => {
+    if(q && !(it.title.toLowerCase().includes(q) || it.brand.toLowerCase().includes(q))) return false;
+    if(cat && it.category !== cat) return false;
+    if(brand && it.brand !== brand) return false;
+    if(size && it.size !== size) return false;
+    if(it.price < pmin || it.price > pmax) return false;
+    if(photoOnly && !it.img) return false;
+    if(newOnly && it.condition !== 'new') return false;
+    if(state.type === 'fake' && !it.fake) return false;
+    if(state.type === 'orig' && it.fake) return false;
+    return true;
+  });
+
+  const sort = $('sort').value;
+  list.sort((a,b) => {
+    if(sort === 'price') return a.price - b.price;
+    if(sort === 'profit') return b.est.profit - a.est.profit;
+    if(sort === 'new') return (b.date||'').localeCompare(a.date||'');
+    return b.est.score - a.est.score;
+  });
+
+  render(list);
+  const good = list.filter(i => i.est.discount >= 0.4).length;
+  const fakes = list.filter(i => i.fake).length;
+  $('stats').textContent = `Найдено: ${list.length} · выгодных (≥40%): ${good} · паль/без бренда: ${fakes} · медиана рынка: ${fmt(Math.round(model.allMedian))}`;
+  $('empty').hidden = list.length > 0;
+}
+
+function render(list){
+  const grid = $('grid');
+  grid.innerHTML = '';
+  for(const it of list){
+    const d = Math.round(it.est.discount * 100);
+    const cls = d >= 40 ? 'good' : d >= 20 ? 'mid' : 'bad';
+    const card = document.createElement('a');
+    card.className = 'cardlink';
+    card.href = it.url || '#';
+    card.target = '_blank'; card.rel = 'noopener';
+    card.innerHTML = `
+      <div class="card">
+        <div class="thumb" style="${it.img ? `background-image:url('${it.img}')` : ''}">
+          ${it.img ? '' : 'без фото'}
+          <div class="badge ${cls}">${d >= 0 ? '−' : '+'}${Math.abs(d)}% к рынку</div>
+        </div>
+        <div class="body">
+          <div class="title">${it.title}</div>
+          <div class="meta">
+            <span class="tag">${it.brand}</span>
+            ${it.size ? `<span class="tag">${it.size}</span>` : ''}
+            ${it.fake ? '<span class="tag fake">паль · нет бренда</span>' : ''}
+            ${it.condition === 'new' ? '<span class="tag">новое</span>' : ''}
+          </div>
+          <div class="price">${fmt(it.price)}</div>
+          <div class="est">рынок ≈ <b>${fmt(it.est.market)}</b><br>
+            прибыль: <b style="color:${it.est.profit > 0 ? 'var(--accent)' : 'var(--bad)'}">${it.est.profit > 0 ? '+' : ''}${fmt(it.est.profit)}</b><br>
+            <span style="opacity:.7">${it.est.basis}</span></div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  }
+}
+
+async function boot(){
+  const resp = await fetch('data.json', {cache:'no-store'});
+  const data = await resp.json();
+  state.data = data;
+  state.model = buildModel(data.items);
+  $('city').textContent = data.city || '';
+  const dt = new Date(data.updated);
+  $('updated').textContent = `обновлено: ${dt.toLocaleString('ru-RU')} · ${data.items.length} объявлений`;
+
+  const uniq = k => [...new Set(data.items.map(i => i[k]).filter(Boolean))].sort();
+  fillSelect($('cat'), uniq('category'), 'Все категории');
+  fillSelect($('brand'), uniq('brand'), 'Все бренды');
+  fillSelect($('size'), uniq('size'), 'Все размеры');
+
+  for(const el of ['q','cat','brand','size','sort','pmin','pmax','photoOnly','newOnly'])
+    $(el).addEventListener('input', applyFilters);
+
+  document.querySelectorAll('#typeChips .chip').forEach(ch => ch.addEventListener('click', () => {
+    document.querySelectorAll('#typeChips .chip').forEach(c => c.classList.remove('on'));
+    ch.classList.add('on'); state.type = ch.dataset.type; applyFilters();
+  }));
+
+  applyFilters();
+}
+
+start();
+// service worker отключён: он отдавал устаревшую страницу из кэша
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations()
+    .then(rs => rs.forEach(r => r.unregister()))
+    .catch(() => {});
+  if (window.caches) {
+    caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(() => {});
+  }
+}
+</script>
+</body>
+</html>
