@@ -119,76 +119,134 @@ const state = {data:null, type:'all'};
 
 const $ = id => document.getElementById(id);
 
-/* ---------------- доступ: пробный период / бессрочный ---------------- */
-const ACCESS_CODES = { 'FRIEND-3D': 3, 'OWNER': 0 }; // значение — дней, 0 = бессрочно
-const LS_KEY = 'avito_access_v1';
+/* ---------------- доступ: серверный триал (Cloudflare Worker) ---------------- */
+const WORKER = 'https://avito-finder-trial.artemfromkomi024.workers.dev';
+const LS_DEV = 'avito_device';
+const LS_STATE = 'avito_state_v2';
 const DAY = 86400000;
 
-function readAccess() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) { return null; }
+function deviceId() {
+  let d = localStorage.getItem(LS_DEV);
+  if (!d) {
+    d = (crypto.randomUUID ? crypto.randomUUID() : 'dev-' + Math.random().toString(36).slice(2) + Date.now().toString(36));
+    localStorage.setItem(LS_DEV, d);
+  }
+  return d;
 }
-function applyCode(raw) {
+
+async function api(path, body) {
+  const res = await fetch(WORKER + path, body ? {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body)
+  } : {});
+  if (!res.ok) throw new Error('http ' + res.status);
+  return res.json();
+}
+
+function cacheState(obj) { localStorage.setItem(LS_STATE, JSON.stringify(Object.assign({}, obj, { savedAt: Date.now() }))); }
+function cachedState() { try { return JSON.parse(localStorage.getItem(LS_STATE) || 'null'); } catch (e) { return null; } }
+
+async function resolveAccess() {
+  const cached = cachedState();
+  try {
+    const r = await api('/status?device=' + encodeURIComponent(deviceId()));
+    if (r.permanent) { cacheState({ permanent: true }); return { ok: true }; }
+    if (r.leftMs > 0) { cacheState({ leftMs: r.leftMs }); return { ok: true, leftMs: r.leftMs }; }
+    return { ok: false, reason: cached ? 'expired' : 'none' };
+  } catch (e) {
+    if (cached && cached.permanent) return { ok: true, offline: true };
+    if (cached && cached.leftMs) {
+      const left = cached.leftMs - (Date.now() - cached.savedAt);
+      if (left > 0) return { ok: true, leftMs: left, offline: true };
+      return { ok: false, reason: 'expired' };
+    }
+    return { ok: false, reason: 'offline' };
+  }
+}
+
+async function submitCode(raw) {
   const code = (raw || '').trim().toUpperCase();
-  if (!(code in ACCESS_CODES)) return false;
-  const days = ACCESS_CODES[code];
-  localStorage.setItem(LS_KEY, JSON.stringify({ code, days, start: Date.now() }));
-  return true;
+  if (!code) return false;
+  if (code === 'OWNER-2026') {
+    await api('/claim', { device: deviceId(), code });
+    cacheState({ permanent: true });
+    return true;
+  }
+  if (code === 'FRIEND-3D') {
+    const r = await api('/trial', { device: deviceId() });
+    if (r.permanent) { cacheState({ permanent: true }); return true; }
+    if (r.leftMs > 0) { cacheState({ leftMs: r.leftMs }); return true; }
+  }
+  return false;
 }
-function checkAccess() {
-  const a = readAccess();
-  if (!a) return { ok: false, reason: 'none' };
-  if (!a.days) return { ok: true, a };
-  const left = a.start + a.days * DAY - Date.now();
-  return left > 0 ? { ok: true, a, leftMs: left } : { ok: false, reason: 'expired', a };
-}
+
 function fmtLeft(ms) {
   const d = Math.floor(ms / DAY);
   const h = Math.floor((ms % DAY) / 3600000);
   const m = Math.floor((ms % 3600000) / 60000);
   return (d ? d + ' д ' : '') + h + ' ч ' + m + ' мин';
 }
+
 function showTrialBanner(leftMs) {
   const el = $('trialBanner');
   el.hidden = false;
+  const startedAt = Date.now();
   const tick = () => {
     const left = leftMs - (Date.now() - startedAt);
     if (left <= 0) { location.reload(); return; }
     el.className = 'banner' + (left < DAY ? ' warn' : '');
     el.textContent = 'Пробный доступ — осталось ' + fmtLeft(left);
   };
-  const startedAt = Date.now();
   tick();
   setInterval(tick, 30000);
 }
+
 function showGate(reason) {
   const gate = $('gate');
   gate.hidden = false;
   if (reason === 'expired') {
     $('gateTitle').textContent = 'Пробный период закончился';
     $('gateText').textContent = 'Трёхдневный доступ истёк. Напиши владельцу приложения, чтобы продлить.';
+  } else if (reason === 'offline') {
+    $('gateTitle').textContent = 'Нет связи с сервером';
+    $('gateText').textContent = 'Проверь интернет и обнови страницу. Если не помогло — напиши владельцу.';
   }
-  const submit = () => {
-    if (applyCode($('gateInput').value)) {
-      gate.hidden = true;
-      start();
-    } else {
-      $('gateErr').textContent = 'Код не подходит';
+  const submit = async () => {
+    $('gateErr').textContent = '';
+    const btn = $('gateBtn');
+    btn.disabled = true;
+    try {
+      if (await submitCode($('gateInput').value)) {
+        gate.hidden = true;
+        start();
+      } else {
+        $('gateErr').textContent = 'Код не подходит';
+      }
+    } catch (e) {
+      $('gateErr').textContent = 'Нет связи с сервером';
+    } finally {
+      btn.disabled = false;
     }
   };
   $('gateBtn').addEventListener('click', submit);
   $('gateInput').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
 }
 
-function start() {
+async function start() {
   const url = new URL(location.href);
   const code = url.searchParams.get('code');
-  if (code && applyCode(code)) {
-    url.searchParams.delete('code');
-    history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
+  if (code) {
+    try {
+      if (await submitCode(code)) {
+        url.searchParams.delete('code');
+        history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
+      }
+    } catch (e) { /* нет сети — ниже покажем состояние */ }
   }
-  const acc = checkAccess();
+  const acc = await resolveAccess();
   if (!acc.ok) { showGate(acc.reason); return; }
-  if (acc.a.days) showTrialBanner(acc.leftMs);
+  if (acc.leftMs) showTrialBanner(acc.leftMs);
   boot();
 }
 
