@@ -566,7 +566,8 @@ function pullFresh() {
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (fresh) {
       if (!fresh || !fresh.items || !fresh.items.length) return;
-      if (String(fresh.updated) === String(DATA.updated)) return;
+      // обновление каталога определяем и по времени, и по числу объявлений
+      if (String(fresh.updated) === String(DATA.updated) && fresh.items.length === DATA.items.length) return;
       DATA = fresh;
       rescore();
       updateHeader();
