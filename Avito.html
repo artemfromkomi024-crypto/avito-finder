@@ -471,7 +471,9 @@ function uniq(key) {
 function init() {
   $('city').textContent = DATA.city || '';
   var dt = new Date(DATA.updated);
-  $('updated').textContent = 'обновлено: ' + dt.toLocaleString('ru-RU') + ' · ' + DATA.items.length + ' объявлений';
+  var when = isNaN(dt) ? String(DATA.updated || '')
+                       : dt.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }) + ' МСК';
+  $('updated').textContent = 'обновлено: ' + when + ' · ' + DATA.items.length + ' объявлений';
 
   fillSelect($('cat'), uniq('category'));
   fillSelect($('brand'), uniq('brand'));
