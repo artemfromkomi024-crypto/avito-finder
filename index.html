@@ -6,63 +6,154 @@
 <meta name="theme-color" content="#0f1220">
 <title>Авито-Финдер</title>
 <style>
-  :root{--bg:#0f1220;--card:#181c2e;--card2:#1f2438;--line:#2b3149;--text:#e9edfb;--muted:#98a0bd;
-        --accent:#5ee08a;--warn:#ffb84d;--bad:#ff6b6b}
+  :root{
+    --bg:#0a0c13; --card:#141827; --card2:#1b2033;
+    --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16);
+    --text:#edf0fa; --muted:#8f97b1;
+    --accent:#4ade80; --accent-dim:rgba(74,222,128,.14);
+    --warn:#fbbf24; --bad:#f87171; --blue:#60a5fa;
+    --radius:16px; --shadow:0 10px 28px rgba(0,0,0,.42);
+  }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,Segoe UI,Roboto,Arial,sans-serif;padding-bottom:70px}
-  header{position:sticky;top:0;z-index:10;background:#0f1220;border-bottom:1px solid var(--line);padding:12px 14px 10px}
-  h1{font-size:17px;margin:0 0 2px}
-  .muted{color:var(--muted);font-size:12px}
-  .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;min-height:100vh;color:var(--text);padding-bottom:64px;
+    background:
+      radial-gradient(900px 520px at 10% -14%, rgba(74,222,128,.10), transparent 60%),
+      radial-gradient(820px 520px at 100% -4%, rgba(96,165,250,.09), transparent 55%),
+      var(--bg);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:rgba(74,222,128,.28)}
+  header{
+    position:sticky;top:0;z-index:20;padding:14px 16px 10px;
+    background:rgba(10,12,19,.84);border-bottom:1px solid var(--line);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  }
+  h1{display:flex;align-items:center;gap:9px;font-size:18px;font-weight:700;letter-spacing:-.25px;margin:0}
+  h1::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);
+             box-shadow:0 0 14px rgba(74,222,128,.85);flex:none}
+  .muted{color:var(--muted);font-size:12px;font-weight:400}
+  #updated{margin-top:3px}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
   .controls .wide{grid-column:1/-1}
-  select,input{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);
-               border-radius:10px;padding:9px 10px;font-size:14px;outline:none}
-  .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px}
+  select,input{
+    width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);
+    border-radius:11px;padding:9px 11px;font-size:14px;outline:none;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  select:hover,input:hover{border-color:var(--line2)}
+  select:focus,input:focus{border-color:rgba(74,222,128,.55);box-shadow:0 0 0 3px rgba(74,222,128,.12)}
+  input[type=search]{-webkit-appearance:none}
+  .chips{
+    display:flex;gap:7px;overflow-x:auto;padding:10px 0 2px;
+    scrollbar-width:none;-ms-overflow-style:none;
+    mask-image:linear-gradient(90deg,#000 92%,transparent);
+    -webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);
+  }
   .chips::-webkit-scrollbar{display:none}
-  .chip{white-space:nowrap;background:var(--card2);border:1px solid var(--line);color:var(--muted);
-        padding:7px 12px;border-radius:999px;font-size:13px;cursor:pointer}
-  .chip.on{background:rgba(94,224,138,.14);border-color:rgba(94,224,138,.5);color:var(--accent)}
-  .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-  .toggle{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);
-          background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer}
-  .toggle input{accent-color:var(--accent);width:auto}
-  #stats{color:var(--muted);font-size:12px;margin-top:8px}
-  main{padding:12px 14px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
-  .thumb{aspect-ratio:1/1;background:#0b0e18 center/cover no-repeat;position:relative;display:flex;
-         align-items:center;justify-content:center;color:#3a4160;font-size:12px}
-  .badge{position:absolute;top:8px;left:8px;background:rgba(10,12,20,.85);border-radius:8px;padding:3px 7px;font-size:12px;font-weight:600}
+  .chip{
+    white-space:nowrap;background:var(--card2);border:1px solid var(--line);color:var(--muted);
+    padding:7px 13px;border-radius:999px;font-size:13px;cursor:pointer;user-select:none;
+    transition:color .15s ease,border-color .15s ease,background .15s ease;
+  }
+  .chip:hover{color:var(--text);border-color:var(--line2)}
+  .chip.on{background:var(--accent-dim);border-color:rgba(74,222,128,.45);color:var(--accent);font-weight:600}
+  .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .toggle{
+    display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);
+    background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:7px 11px;cursor:pointer;
+    transition:color .15s ease,border-color .15s ease;
+  }
+  .toggle:hover{color:var(--text);border-color:var(--line2)}
+  .toggle input{accent-color:var(--accent);width:auto;margin:0}
+  #stats{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+  .pill{
+    font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.035);
+    border:1px solid var(--line);border-radius:999px;padding:4px 9px;white-space:nowrap;
+  }
+  .pill b{color:var(--text);font-weight:650}
+  .pill-good b{color:var(--accent)}
+  .pill-ai{border-color:rgba(96,165,250,.3)}
+  .pill-ai b{color:var(--blue)}
+  main{padding:14px 16px 10px;max-width:1680px;margin:0 auto}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:14px}
+  .card{
+    position:relative;display:flex;flex-direction:column;overflow:hidden;
+    background:linear-gradient(180deg,var(--card),#101420);
+    border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:0 2px 10px rgba(0,0,0,.18);
+    transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+  }
+  .card:hover{transform:translateY(-3px);border-color:var(--line2);box-shadow:var(--shadow)}
+  .thumb{
+    aspect-ratio:1/1;background:#0b0e18 center/cover no-repeat;position:relative;
+    display:flex;align-items:center;justify-content:center;color:#39405c;font-size:12px;
+  }
+  .thumb::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg,rgba(0,0,0,.28),transparent 40%,rgba(0,0,0,.14));
+  }
+  .badge{
+    position:absolute;top:8px;left:8px;z-index:2;font-size:11.5px;font-weight:650;
+    background:rgba(8,10,16,.8);border:1px solid rgba(255,255,255,.10);border-radius:999px;
+    padding:3px 8px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  }
   .badge.good{color:var(--accent)} .badge.mid{color:var(--warn)} .badge.bad{color:var(--bad)}
-  .body{padding:9px 10px 11px;display:flex;flex-direction:column;gap:6px;flex:1}
-  .title{font-size:13px;line-height:1.3;max-height:3.4em;overflow:hidden}
+  .body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:7px;flex:1}
+  .title{
+    font-size:13px;line-height:1.32;font-weight:500;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
   .meta{display:flex;gap:5px;flex-wrap:wrap}
-  .tag{font-size:11px;color:var(--muted);background:#141828;border:1px solid var(--line);border-radius:6px;padding:2px 6px}
-  .tag.fake{color:#ff8a8a;border-color:rgba(255,107,107,.4)}
-  .tag.orig{color:var(--accent);border-color:rgba(94,224,138,.4)}
-  .tag.doubt{color:var(--warn);border-color:rgba(255,184,77,.4)}
-  .price{font-size:16px;font-weight:700;margin-top:auto}
-  .est{font-size:11px;color:var(--muted)}
-  .est b{color:var(--text);font-weight:600}
+  .tag{
+    font-size:10.5px;color:var(--muted);background:rgba(255,255,255,.04);
+    border:1px solid var(--line);border-radius:7px;padding:2px 6px;white-space:nowrap;
+  }
+  .tag.fake{color:#fca5a5;background:rgba(248,113,113,.10);border-color:rgba(248,113,113,.30)}
+  .tag.orig{color:#86efac;background:rgba(74,222,128,.10);border-color:rgba(74,222,128,.30)}
+  .tag.doubt{color:#fcd34d;background:rgba(251,191,36,.10);border-color:rgba(251,191,36,.28)}
+  .price{font-size:17px;font-weight:700;letter-spacing:-.2px;margin-top:auto}
+  .est{font-size:11px;color:var(--muted);line-height:1.55}
   a{color:inherit;text-decoration:none}
-  .empty{color:var(--muted);text-align:center;padding:40px 10px}
-  footer{position:fixed;bottom:0;left:0;right:0;background:#0f1220;border-top:1px solid var(--line);
-         padding:8px 14px;font-size:11px;color:var(--muted);text-align:center}
-  .filter-btn{display:none;background:var(--card2);border:1px solid var(--line);color:var(--text);
-              border-radius:10px;padding:8px 12px;font-size:13px;cursor:pointer;margin-top:8px}
+  .empty{color:var(--muted);text-align:center;padding:48px 12px;font-size:14px}
+  footer{
+    position:fixed;bottom:0;left:0;right:0;z-index:15;text-align:center;
+    padding:9px 14px;font-size:11px;color:var(--muted);
+    background:rgba(10,12,19,.86);border-top:1px solid var(--line);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  }
+  .filter-btn{
+    display:none;background:var(--card2);border:1px solid var(--line);color:var(--text);
+    border-radius:11px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;
+    transition:border-color .15s ease;
+  }
+  .filter-btn:hover{border-color:var(--line2)}
   .filters{display:block}
   .filters .head{display:none}
   @media (max-width:700px){
-    header{padding:10px 12px}
+    header{padding:12px 13px 10px}
+    h1{font-size:17px}
     .filter-btn{display:inline-block}
-    .filters{position:fixed;left:0;right:0;top:0;z-index:40;background:#0f1220;
-             border-bottom:1px solid var(--line);padding:10px 14px 14px;max-height:70vh;overflow-y:auto;
-             transform:translateY(-115%);transition:transform .22s ease;box-shadow:0 12px 30px rgba(0,0,0,.6)}
+    .filters{
+      position:fixed;left:0;right:0;top:0;z-index:40;background:#0d1019;
+      border-bottom:1px solid var(--line);border-radius:0 0 18px 18px;
+      padding:12px 14px 16px;max-height:78vh;overflow-y:auto;
+      transform:translateY(-115%);transition:transform .24s ease;
+      box-shadow:0 18px 40px rgba(0,0,0,.65);
+      backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    }
     .filters.open{transform:translateY(0)}
-    .filters .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-    .filters .head b{font-size:14px}
-    .filters .head button{background:none;border:0;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
-    .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+    .filters .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .filters .head b{font-size:15px}
+    .filters .head button{
+      background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);
+      width:30px;height:30px;border-radius:50%;font-size:17px;line-height:1;cursor:pointer;
+    }
+    .grid{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:11px}
+    .body{padding:9px 10px 11px}
+    .price{font-size:16px}
   }
 </style>
 </head>
@@ -97,12 +188,6 @@
     <div class="chip" data-type="fake">Паль</div>
   </div>
 
-  <div class="chips" id="aiChips">
-    <div class="chip on" data-ai="all">ИИ: все</div>
-    <div class="chip" data-ai="original">ИИ: оригинал</div>
-    <div class="chip" data-ai="unclear">ИИ: не понять</div>
-    <div class="chip" data-ai="fake">ИИ: паль</div>
-  </div>
 
   <div class="row">
     <label class="toggle"><input type="checkbox" id="photoOnly" checked> только с фото</label>
@@ -125,7 +210,6 @@ let DATA = {"city": "Сыктывкар", "updated": "2026-11-14T21:18:11", "sou
 
 const $ = function (id) { return document.getElementById(id); };
 let stateType = 'all';
-let stateAI = 'all';
 
 function median(arr) {
   if (!arr.length) return 0;
@@ -247,19 +331,22 @@ function cardOf(item, est, auth) {
 
   var meta = document.createElement('div');
   meta.className = 'meta';
-  var authText = auth.label === 'паль'
-    ? 'паль ' + Math.round(auth.score * 100) + '%'
-    : auth.label === 'оригинал'
-      ? 'оригинал ' + Math.round((1 - auth.score) * 100) + '%'
-      : 'спорно';
-
-  var aiText = '', aiCls = '', aiReasons = '';
-  if (item.ai) {
-    var conf = Math.round((item.ai.confidence || 0) * 100);
-    if (item.ai.verdict === 'original') { aiText = 'ИИ: оригинал ' + conf + '%'; aiCls = ' orig'; }
-    else if (item.ai.verdict === 'fake') { aiText = 'ИИ: паль ' + conf + '%'; aiCls = ' fake'; }
-    else { aiText = 'ИИ: не понять'; aiCls = ' doubt'; }
-    aiReasons = (item.ai.reasons || []).join('; ');
+  var ai = item.ai;
+  var label, labelCls, labelTip;
+  if (ai) {
+    var conf = Math.round((ai.confidence || 0) * 100);
+    if (ai.verdict === 'original') { label = 'ИИ: оригинал ' + conf + '%'; labelCls = ' orig'; }
+    else if (ai.verdict === 'fake') { label = 'ИИ: паль ' + conf + '%'; labelCls = ' fake'; }
+    else { label = 'ИИ не распознал'; labelCls = ' doubt'; }
+    labelTip = (ai.reasons || []).join('; ');
+  } else {
+    label = auth.label === 'паль'
+      ? 'паль ' + Math.round(auth.score * 100) + '%'
+      : auth.label === 'оригинал'
+        ? 'оригинал ' + Math.round((1 - auth.score) * 100) + '%'
+        : 'спорно';
+    labelCls = auth.label === 'паль' ? ' fake' : auth.label === 'оригинал' ? ' orig' : ' doubt';
+    labelTip = (auth.reasons || []).join('; ');
   }
 
   var tags = [
@@ -267,8 +354,7 @@ function cardOf(item, est, auth) {
     { text: item.size, cls: '' },
     { text: item.condition === 'new' ? 'новое' : '', cls: '' },
     { text: item.city, cls: '' },
-    { text: authText, cls: auth.label === 'паль' ? ' fake' : auth.label === 'оригинал' ? ' orig' : ' doubt' },
-    { text: aiText, cls: aiCls, ai: true }
+    { text: label, cls: labelCls, tip: labelTip }
   ];
 
   tags.forEach(function (t) {
@@ -276,8 +362,7 @@ function cardOf(item, est, auth) {
     var s = document.createElement('span');
     s.className = 'tag' + t.cls;
     s.textContent = t.text;
-    if (t.ai && aiReasons) s.title = aiReasons;
-    else if (t.cls && auth.reasons && auth.reasons.length) s.title = auth.reasons.join('; ');
+    if (t.tip) s.title = t.tip;
     meta.appendChild(s);
   });
 
@@ -323,13 +408,12 @@ function apply() {
     if (it.price < pmin || it.price > pmax) return false;
     if (photoOnly && !it.img) return false;
     if (newOnly && it.condition !== 'new') return false;
-    if (stateType === 'fake' && x.auth.label !== 'паль') return false;
-    if (stateType === 'orig' && x.auth.label !== 'оригинал') return false;
-    if (stateType === 'doubt' && x.auth.label !== 'спорно') return false;
-    if (stateAI !== 'all') {
-      var av = x.item.ai && x.item.ai.verdict;
-      if (!av || av !== stateAI) return false;
-    }
+    var lbl = it.ai
+      ? (it.ai.verdict === 'original' ? 'оригинал' : it.ai.verdict === 'fake' ? 'паль' : 'спорно')
+      : x.auth.label;
+    if (stateType === 'fake' && lbl !== 'паль') return false;
+    if (stateType === 'orig' && lbl !== 'оригинал') return false;
+    if (stateType === 'doubt' && lbl !== 'спорно') return false;
     return true;
   });
 
@@ -345,10 +429,12 @@ function apply() {
   list.forEach(function (x) { grid.appendChild(cardOf(x.item, x.est, x.auth)); });
 
   var good = list.filter(function (x) { return x.est.discount >= 0.4; }).length;
-  $('stats').textContent = 'Найдено: ' + list.length + ' · выгодных (≥40%): ' + good +
-    ' · медиана рынка: ' + fmt(Math.round(model.allMedian));
   var aiChecked = list.filter(function (x) { return x.item.ai; }).length;
-  if (aiChecked) $('stats').textContent += ' · ИИ: ' + aiChecked;
+  $('stats').innerHTML =
+    '<span class="pill"><b>' + list.length + '</b> найдено</span>' +
+    '<span class="pill pill-good"><b>' + good + '</b> выгодных</span>' +
+    '<span class="pill">медиана <b>' + fmt(Math.round(model.allMedian)) + '</b></span>' +
+    (aiChecked ? '<span class="pill pill-ai">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
   $('empty').hidden = list.length > 0;
 }
 
@@ -387,14 +473,6 @@ function init() {
     });
   });
 
-  Array.prototype.forEach.call(document.querySelectorAll('#aiChips .chip'), function (ch) {
-    ch.addEventListener('click', function () {
-      Array.prototype.forEach.call(document.querySelectorAll('#aiChips .chip'), function (c) { c.classList.remove('on'); });
-      ch.classList.add('on');
-      stateAI = ch.dataset.ai;
-      apply();
-    });
-  });
 
   apply();
 }
