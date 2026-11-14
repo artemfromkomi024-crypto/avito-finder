@@ -2,13 +2,16 @@
 """
 Парсер Авито для «Авито-Финдер» (Firefox + SOCKS-прокси из config.json).
 
-Логика:
-  • открывает поиск по списку запросов (город Сыктывкар, цена 1000–20000);
-  • дожидается прохождения JS-челленджа (Авито отдаёт 439 и редирект);
-  • вытаскивает название, цену, ссылку, фото, бренд, размер, состояние, «паль»;
-  • пишет ../data.json — его читает index.html.
+Что делает за один запуск:
+  • берёт из очереди следующие пары «город + запрос» (курсор хранится в data.json),
+    поэтому за несколько запусков обходятся все города и все категории;
+  • делает по одному запросу на каждом доступном маршруте: напрямую и через прокси.
+    Это два разных IP, значит Авито режет их независимо, и добыча удваивается;
+  • сливает результат со старыми данными по ссылке, ничего не теряя;
+  • пишет ../data.json со временем по Москве.
 
-Запуск: python avito_parser.py
+Запуск: python avito_parser.py            (напрямую + прокси)
+        python avito_parser.py --no-proxy (только напрямую)
 """
 
 import json
@@ -17,7 +20,7 @@ import random
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
 from playwright.sync_api import sync_playwright, TimeoutError as PwTimeout
@@ -30,6 +33,9 @@ except Exception:
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_OUT = os.path.join(os.path.dirname(BASE_DIR), "data.json")
 CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
+
+# время всегда по Москве, независимо от часового пояса машины (ПК или сервер GitHub)
+MOSCOW = timezone(timedelta(hours=3))
 
 BLOCK_MARKERS = ["Доступ ограничен", "проблема с IP", "Подтвердите, что вы не робот"]
 
@@ -76,9 +82,34 @@ CATEGORY_KEYS = {
 }
 
 
+def now_msk():
+    return datetime.now(MOSCOW)
+
+
+def parse_ts(value):
+    """Строка времени -> datetime с часовым поясом (старые записи считаем московскими)."""
+    try:
+        dt = datetime.fromisoformat(str(value))
+    except Exception:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=MOSCOW)
+    return dt
+
+
 def load_config():
     with open(CONFIG_PATH, encoding="utf-8-sig") as f:
         return json.load(f)
+
+
+def load_old():
+    if not os.path.exists(DATA_OUT):
+        return {}
+    try:
+        with open(DATA_OUT, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
 
 
 def detect_brand(text):
@@ -214,7 +245,7 @@ def parse_page(page, limit):
                 "fake": (brand == "NoName") or detect_fake(title),
                 "img": img,
                 "url": url,
-                "date": (date_el.inner_text().strip() if date_el else datetime.now().strftime("%Y-%m-%d")),
+                "date": (date_el.inner_text().strip() if date_el else now_msk().strftime("%Y-%m-%d")),
             })
         except Exception:
             continue
@@ -244,26 +275,19 @@ def check_proxy(cfg, timeout=6):
         return False, f"ПРОКСИ НЕДОСТУПЕН ({host}:{port}): {e}"
 
 
-def main():
-    cfg = load_config()
-    if "--no-proxy" in sys.argv:
-        cfg["proxy"] = ""
-        print("режим: без прокси (прямое подключение)")
-    ok, msg = check_proxy(cfg)
-    print(msg)
-    if not ok:
-        return 3
-    limit = cfg.get("max_items_per_query", 40)
-    print(f"Старт: {datetime.now():%Y-%m-%d %H:%M} · запросов: {len(cfg['queries'])}")
+def all_pairs(cfg):
+    """Все пары «город + запрос» — очередь, которую проходим по кругу."""
+    return [(city["name"], city["slug"], q) for city in cfg["cities"] for q in cfg["queries"]]
 
-    items, blocked = [], False
-    max_req = cfg.get("max_requests_per_run", 3)
-    done = 0
 
+def collect_route(cfg, proxy, label, pairs, limit, budget):
+    """Один маршрут (прямой или через прокси): до `budget` успешных страниц."""
+    items, used, blocked = [], 0, False
+    print(f"маршрут: {label}")
     with sync_playwright() as pw:
         browser = pw.firefox.launch(
             headless=cfg.get("headless", True),
-            proxy={"server": cfg["proxy"]} if cfg.get("proxy") else None,
+            proxy={"server": proxy} if proxy else None,
             firefox_user_prefs={
                 "network.proxy.socks_remote_dns": True,
                 # не грузим картинки: парсеру нужны только ссылки на них, это в разы легче
@@ -274,72 +298,108 @@ def main():
                                   viewport={"width": 1366, "height": 900})
         page = ctx.new_page()
 
-        for city in cfg["cities"]:
-            if blocked or done >= max_req:
+        for name, slug, query in pairs:
+            print(f"[{name}] {query}")
+            try:
+                page.goto(build_url(cfg, slug, query), wait_until="domcontentloaded", timeout=60000)
+            except PwTimeout:
+                print("  таймаут")
+                continue
+            except Exception as e:
+                print("  ошибка:", str(e)[:100])
+                continue
+
+            state = wait_for_content(page, cfg.get("challenge_timeout", 40))
+            if state == "blocked":
+                print("  !!! блок по IP")
+                blocked = True
                 break
-            for i, query in enumerate(cfg["queries"], 1):
-                if blocked or done >= max_req:
-                    break
-                print(f"[{city['name']}] [{i}/{len(cfg['queries'])}] {query}")
-                try:
-                    page.goto(build_url(cfg, city["slug"], query), wait_until="domcontentloaded", timeout=60000)
-                except PwTimeout:
-                    print("  таймаут")
-                    continue
+            if state == "timeout":
+                print("  карточки не появились")
+                continue
 
-                state = wait_for_content(page, cfg.get("challenge_timeout", 40))
-                if state == "blocked":
-                    print("  !!! блок по IP - останавливаемся")
-                    blocked = True
-                    break
-                if state == "timeout":
-                    print("  карточки не появились")
-                    continue
+            found = parse_page(page, limit)
+            for it in found:
+                it["city"] = name
+            items.extend(found)
+            used += 1
+            print(f"  собрано: {len(found)}")
 
-                found = parse_page(page, limit)
-                for it in found:
-                    it["city"] = city["name"]
-                print(f"  собрано: {len(found)}")
-                items.extend(found)
-                done += 1
-
-                if done < max_req:
-                    pause = random.uniform(cfg.get("delay_min", 15), cfg.get("delay_max", 35))
-                    print(f"  пауза {pause:.0f} c")
-                    time.sleep(pause)
+            if used >= budget:
+                break
+            pause = random.uniform(cfg.get("delay_min", 15), cfg.get("delay_max", 35))
+            print(f"  пауза {pause:.0f} c")
+            time.sleep(pause)
 
         browser.close()
+    return items, used, blocked
+
+
+def main():
+    cfg = load_config()
+    if "--no-proxy" in sys.argv:
+        cfg["proxy"] = ""
+
+    # маршруты: сначала напрямую, потом через прокси (если он есть и отвечает)
+    routes = [("напрямую", "")]
+    if cfg.get("proxy"):
+        ok, msg = check_proxy(cfg)
+        print(msg)
+        if ok:
+            routes.append(("прокси", cfg["proxy"]))
+        else:
+            print("прокси недоступен - работаем только напрямую")
+
+    old = load_old()
+    old_items = old.get("items", [])
+    pairs = all_pairs(cfg)
+    total = len(pairs)
+    cursor = int(old.get("cursor") or 0)
+    budget = int(cfg.get("requests_per_route", 1))
+    limit = cfg.get("max_items_per_query", 40)
+
+    print(f"Старт: {now_msk():%Y-%m-%d %H:%M} MSK · в очереди {total} пар · курсор {cursor} · маршрутов {len(routes)}")
+
+    collected = []
+    idx = cursor
+    for label, proxy in routes:
+        chunk = [pairs[(idx + k) % total] for k in range(budget)]
+        found, used, blocked = collect_route(cfg, proxy, label, chunk, limit, budget)
+        collected.extend(found)
+        idx += used
+        if blocked:
+            print(f"  маршрут «{label}» закрыт Авито, идём дальше")
 
     uniq = {}
     # сначала прошлые данные, чтобы не терять объявления при частичном прогоне
-    if os.path.exists(DATA_OUT):
-        try:
-            with open(DATA_OUT, encoding="utf-8") as f:
-                old = json.load(f)
-            for it in old.get("items", []):
-                if it.get("url"):
-                    uniq[it["url"]] = it
-        except Exception:
-            pass
-
-    for it in items:
+    for it in old_items:
+        if it.get("url"):
+            uniq[it["url"]] = it
+    for it in collected:
         uniq[it["url"]] = it
     items = list(uniq.values())
 
-    if not items:
+    if not collected:
         print("Ничего не собрано - data.json не изменён")
-        return 1 if not blocked else 2
+        return 2
+
+    updated = now_msk()
+    old_ts = parse_ts(old.get("updated"))
+    if old_ts and old_ts > updated:
+        updated = old_ts  # не откатываем время назад, если старые данные свежее
 
     data = {
         "city": cfg["city"],
-        "updated": datetime.now().isoformat(timespec="seconds"),
+        "updated": updated.isoformat(timespec="seconds"),
+        "cursor": idx % total,
         "source": "avito.ru",
         "items": items,
     }
     with open(DATA_OUT, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
 
-    print(f"Готово: {len(items)} объявлений, файл: {DATA_OUT}")
+    print(f"Готово: +{len(collected)} новых, всего {len(items)}, "
+          f"следующий курсор {data['cursor']}, файл: {DATA_OUT}")
     return 0
 
 
