@@ -10,12 +10,25 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data.json")
 URL = "https://raw.githubusercontent.com/artemfromkomi024-crypto/avito-finder/main/data.json"
+
+MOSCOW = timezone(timedelta(hours=3))
+FIELDS = ("ai", "img", "city", "size", "condition", "brand", "category", "cursor")
+
+
+def ts(value):
+    """Строка времени -> datetime с поясом; старые записи без пояса считаем московскими."""
+    try:
+        dt = datetime.fromisoformat(str(value))
+    except Exception:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=MOSCOW)
 
 
 def load_remote():
@@ -58,20 +71,29 @@ def main():
             continue
         # дополняем облачную запись тем, чего в ней нет, но есть локально
         changed = False
-        for key in ("ai", "img", "city", "size", "condition", "brand", "category"):
+        for key in FIELDS:
+            if key == "cursor":
+                continue
             if it.get(key) and not old.get(key):
                 old[key] = it[key]
                 changed = True
         if changed:
             enriched += 1
 
+    local_ts, remote_ts = ts(local.get("updated")), ts(remote.get("updated"))
+    updated = max([t for t in (local_ts, remote_ts) if t], default=None)
+    cursor = max(int(local.get("cursor") or 0), int(remote.get("cursor") or 0))
+
     merged = {
-        "updated": max(local.get("updated", ""), remote.get("updated", "")),
+        "updated": updated.isoformat(timespec="seconds") if updated else "",
+        "cursor": cursor,
         "city": remote.get("city") or local.get("city"),
+        "source": "avito.ru",
         "items": list(index.values()),
     }
     io.open(DATA, "w", encoding="utf-8").write(json.dumps(merged, ensure_ascii=False))
-    print(f"слияние с облаком: добавлено локальных {added}, дополнено {enriched}, всего {len(merged['items'])}")
+    print(f"слияние с облаком: добавлено локальных {added}, дополнено {enriched}, "
+          f"всего {len(merged['items'])}, курсор {cursor}")
     return 0
 
 
