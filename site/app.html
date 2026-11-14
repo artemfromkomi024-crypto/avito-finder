@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1220">
+<title>Авито-Финдер</title>
+<style>
+  :root{
+    --bg:#0a0c13; --card:#141827; --card2:#1b2033;
+    --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16);
+    --text:#edf0fa; --muted:#8f97b1;
+    --accent:#4ade80; --accent-dim:rgba(74,222,128,.14);
+    --warn:#fbbf24; --bad:#f87171; --blue:#60a5fa;
+    --radius:16px; --shadow:0 10px 28px rgba(0,0,0,.42);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;min-height:100vh;color:var(--text);padding-bottom:64px;
+    background:
+      radial-gradient(900px 520px at 10% -14%, rgba(74,222,128,.10), transparent 60%),
+      radial-gradient(820px 520px at 100% -4%, rgba(96,165,250,.09), transparent 55%),
+      var(--bg);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:rgba(74,222,128,.28)}
+  header{
+    position:sticky;top:0;z-index:20;padding:14px 16px 10px;
+    background:rgba(10,12,19,.84);border-bottom:1px solid var(--line);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  }
+  h1{display:flex;align-items:center;gap:9px;font-size:18px;font-weight:700;letter-spacing:-.25px;margin:0}
+  h1::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);
+             box-shadow:0 0 14px rgba(74,222,128,.85);flex:none}
+  .muted{color:var(--muted);font-size:12px;font-weight:400}
+  #updated{margin-top:3px}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .controls .wide{grid-column:1/-1}
+  select,input{
+    width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);
+    border-radius:11px;padding:9px 11px;font-size:14px;outline:none;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  select:hover,input:hover{border-color:var(--line2)}
+  select:focus,input:focus{border-color:rgba(74,222,128,.55);box-shadow:0 0 0 3px rgba(74,222,128,.12)}
+  input[type=search]{-webkit-appearance:none}
+  .chips{
+    display:flex;gap:7px;overflow-x:auto;padding:10px 0 2px;
+    scrollbar-width:none;-ms-overflow-style:none;
+    mask-image:linear-gradient(90deg,#000 92%,transparent);
+    -webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);
+  }
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    white-space:nowrap;background:var(--card2);border:1px solid var(--line);color:var(--muted);
+    padding:7px 13px;border-radius:999px;font-size:13px;cursor:pointer;user-select:none;
+    transition:color .15s ease,border-color .15s ease,background .15s ease;
+  }
+  .chip:hover{color:var(--text);border-color:var(--line2)}
+  .chip.on{background:var(--accent-dim);border-color:rgba(74,222,128,.45);color:var(--accent);font-weight:600}
+  .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .toggle{
+    display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);
+    background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:7px 11px;cursor:pointer;
+    transition:color .15s ease,border-color .15s ease;
+  }
+  .toggle:hover{color:var(--text);border-color:var(--line2)}
+  .toggle input{accent-color:var(--accent);width:auto;margin:0}
+  #stats{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+  .pill{
+    font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.035);
+    border:1px solid var(--line);border-radius:999px;padding:4px 9px;white-space:nowrap;
+  }
+  .pill b{color:var(--text);font-weight:650}
+  .pill-good b{color:var(--accent)}
+  .pill-ai{border-color:rgba(96,165,250,.3)}
+  .pill-ai b{color:var(--blue)}
+  main{padding:14px 16px 10px;max-width:1680px;margin:0 auto}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:14px}
+  .card{
+    position:relative;display:flex;flex-direction:column;overflow:hidden;
+    background:linear-gradient(180deg,var(--card),#101420);
+    border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:0 2px 10px rgba(0,0,0,.18);
+    transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+  }
+  .card:hover{transform:translateY(-3px);border-color:var(--line2);box-shadow:var(--shadow)}
+  .thumb{
+    aspect-ratio:1/1;background:#0b0e18 center/cover no-repeat;position:relative;
+    display:flex;align-items:center;justify-content:center;color:#39405c;font-size:12px;
+  }
+  .thumb::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg,rgba(0,0,0,.28),transparent 40%,rgba(0,0,0,.14));
+  }
+  .badge{
+    position:absolute;top:8px;left:8px;z-index:2;font-size:11.5px;font-weight:650;
+    background:rgba(8,10,16,.8);border:1px solid rgba(255,255,255,.10);border-radius:999px;
+    padding:3px 8px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  }
+  .badge.good{color:var(--accent)} .badge.mid{color:var(--warn)} .badge.bad{color:var(--bad)}
+  .body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:7px;flex:1}
+  .title{
+    font-size:13px;line-height:1.32;font-weight:500;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .meta{display:flex;gap:5px;flex-wrap:wrap}
+  .tag{
+    font-size:10.5px;color:var(--muted);background:rgba(255,255,255,.04);
+    border:1px solid var(--line);border-radius:7px;padding:2px 6px;white-space:nowrap;
+  }
+  .tag.fake{color:#fca5a5;background:rgba(248,113,113,.10);border-color:rgba(248,113,113,.30)}
+  .tag.orig{color:#86efac;background:rgba(74,222,128,.10);border-color:rgba(74,222,128,.30)}
+  .tag.doubt{color:#fcd34d;background:rgba(251,191,36,.10);border-color:rgba(251,191,36,.28)}
+  .price{font-size:17px;font-weight:700;letter-spacing:-.2px;margin-top:auto}
+  .est{font-size:11px;color:var(--muted);line-height:1.55}
+  a{color:inherit;text-decoration:none}
+  .empty{color:var(--muted);text-align:center;padding:48px 12px;font-size:14px}
+  footer{
+    position:fixed;bottom:0;left:0;right:0;z-index:15;text-align:center;
+    padding:9px 14px;font-size:11px;color:var(--muted);
+    background:rgba(10,12,19,.86);border-top:1px solid var(--line);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  }
+  .filter-btn{
+    display:none;background:var(--card2);border:1px solid var(--line);color:var(--text);
+    border-radius:11px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;
+    transition:border-color .15s ease;
+  }
+  .filter-btn:hover{border-color:var(--line2)}
+  .filters{display:block}
+  .filters .head{display:none}
+  @media (max-width:700px){
+    header{padding:12px 13px 10px}
+    h1{font-size:17px}
+    .filter-btn{display:inline-block}
+    .filters{
+      position:fixed;left:0;right:0;top:0;z-index:40;background:#0d1019;
+      border-bottom:1px solid var(--line);border-radius:0 0 18px 18px;
+      padding:12px 14px 16px;max-height:78vh;overflow-y:auto;
+      transform:translateY(-115%);transition:transform .24s ease;
+      box-shadow:0 18px 40px rgba(0,0,0,.65);
+      backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    }
+    .filters.open{transform:translateY(0)}
+    .filters .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .filters .head b{font-size:15px}
+    .filters .head button{
+      background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);
+      width:30px;height:30px;border-radius:50%;font-size:17px;line-height:1;cursor:pointer;
+    }
+    .grid{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:11px}
+    .body{padding:9px 10px 11px}
+    .price{font-size:16px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Авито-Финдер <span class="muted" id="city"></span></h1>
+  <div class="muted" id="updated"></div>
+  <button class="filter-btn" id="filtersBtn">Фильтры</button>
+
+  <div class="filters" id="filters">
+    <div class="head"><b>Фильтры</b><button id="filtersClose" aria-label="Закрыть">×</button></div>
+
+    <div class="controls">
+    <input class="wide" id="q" type="search" placeholder="Поиск: бренд, вещь, слово">
+    <select id="cityFilter"><option value="">Все города</option></select>
+    <select id="cat"><option value="">Все категории</option></select>
+    <select id="brand"><option value="">Все бренды</option></select>
+    <select id="size"><option value="">Все размеры</option></select>
+    <select id="sort">
+      <option value="discount">Сначала выгодные</option>
+      <option value="price">Сначала дешёвые</option>
+      <option value="profit">Сначала прибыльные</option>
+    </select>
+    <input id="pmin" type="number" placeholder="Цена от" value="1000">
+    <input id="pmax" type="number" placeholder="Цена до" value="20000">
+  </div>
+
+  <div class="chips" id="typeChips">
+    <div class="chip on" data-type="all">Все</div>
+    <div class="chip" data-type="orig">Оригинал</div>
+    <div class="chip" data-type="doubt">Спорные</div>
+    <div class="chip" data-type="fake">Паль</div>
+  </div>
+
+
+  <div class="row">
+    <label class="toggle"><input type="checkbox" id="photoOnly" checked> только с фото</label>
+    <label class="toggle"><input type="checkbox" id="newOnly"> только новое</label>
+  </div>
+  </div>
+
+  <div id="stats"></div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>Ничего не найдено — ослабь фильтры</div>
+</main>
+
+<footer>Оценка рынка — медиана похожих объявлений. Обновляется 3 раза в день.</footer>
+
+<script>
+let DATA = __DATA__;
+
+const $ = function (id) { return document.getElementById(id); };
+let stateType = 'all';
+var GOOD_DISCOUNT = 0.35; // скидка, с которой вещь считаем выгодной
+
+function median(arr) {
+  if (!arr.length) return 0;
+  var s = arr.slice().sort(function (a, b) { return a - b; });
+  var m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function buildModel(items) {
+  var byKey = new Map(), byBrand = new Map(), byCatB = new Map(), byCat = new Map(), all = [];
+  function add(map, key, price) {
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(price);
+  }
+  items.forEach(function (it) {
+    var branded = it.brand && it.brand !== 'NoName';
+    add(byCat, it.category, it.price);
+    if (branded) {
+      add(byKey, it.category + '|' + it.brand, it.price);
+      add(byBrand, it.brand, it.price);
+      add(byCatB, it.category, it.price);
+    }
+    all.push(it.price);
+  });
+  return { byKey: byKey, byBrand: byBrand, byCatB: byCatB, byCat: byCat, all: all, allMedian: median(all) };
+}
+
+/* оценка подлинности: 0 = явный оригинал, 1 = явное паль */
+var FAKE_WORDS = ['паль', 'реплика', 'копія', 'копия', '1:1', 'аналог', 'репл', 'люкс качество', 'качество люкс', 'идентичен'];
+var ORIG_WORDS = ['оригинал', 'ориг', 'с биркой', 'бирка', 'привез', 'европ', 'сша', 'сток', 'бутик'];
+
+function fakeScore(item, model) {
+  var t = (item.title + ' ' + (item.description || '')).toLowerCase();
+  var s = (item.brand && item.brand !== 'NoName') ? 0.32 : 0.68; // базовая неопределённость
+  var reasons = [];
+
+  FAKE_WORDS.forEach(function (w) {
+    if (t.indexOf(w) >= 0) { s += 0.35; reasons.push('в тексте «' + w + '»'); }
+  });
+  ORIG_WORDS.forEach(function (w) {
+    if (t.indexOf(w) >= 0) { s -= 0.22; reasons.push('в тексте «' + w + '»'); }
+  });
+
+  if (!item.brand || item.brand === 'NoName') { reasons.push('бренд не указан'); }
+
+  var group = model.byBrand.get(item.brand) || [];
+  if (group.length >= 3) {
+    var med = median(group);
+    if (item.price < med * 0.45) { s += 0.25; reasons.push('цена ниже 45% медианы бренда'); }
+    else if (item.price > med * 1.6) { s -= 0.1; reasons.push('цена выше рынка'); }
+  }
+
+  if (item.sellerRating) {
+    if (item.sellerRating < 4.5) { s += 0.12; reasons.push('рейтинг продавца ' + item.sellerRating); }
+    else if (item.sellerRating >= 4.9) { s -= 0.08; reasons.push('высокий рейтинг продавца'); }
+  }
+
+  if (!item.img) { s += 0.1; reasons.push('нет фото'); }
+  if (item.size) { s -= 0.03; }
+
+  s = Math.max(0, Math.min(1, s));
+  var label = s >= 0.65 ? 'паль' : s <= 0.35 ? 'оригинал' : 'спорно';
+  return { score: s, label: label, reasons: reasons };
+}
+
+function estimate(item, model, isFake) {
+  var branded = item.brand && item.brand !== 'NoName';
+  var market = 0, basis = 'по всему рынку';
+
+  function pick(list, why) {
+    if (list && list.length >= 3) { market = median(list); basis = why; return true; }
+    return false;
+  }
+
+  if (branded) {
+    if (pick(model.byKey.get(item.category + '|' + item.brand), 'по ' + (model.byKey.get(item.category + '|' + item.brand) || []).length + ' похожим')) { }
+    else if (pick(model.byBrand.get(item.brand), 'по бренду (' + (model.byBrand.get(item.brand) || []).length + ' шт.)')) { }
+    else if (pick(model.byCatB.get(item.category), 'по брендовым в категории')) { }
+    else if (pick(model.byCat.get(item.category), 'по категории')) { }
+  } else {
+    if (pick(model.byCat.get(item.category), 'по категории')) { }
+  }
+  if (!market) market = model.allMedian * (isFake ? 0.6 : 1);
+
+  return {
+    market: Math.round(market),
+    discount: market > 0 ? 1 - item.price / market : 0,
+    profit: Math.round(market * 0.8 * 0.95 - item.price),
+    basis: basis
+  };
+}
+
+function authLabelOf(item, auth) {
+  if (item.ai) {
+    if (item.ai.verdict === 'original') return 'оригинал';
+    if (item.ai.verdict === 'fake') return 'паль';
+    return 'спорно';
+  }
+  return auth.label;
+}
+
+function fmt(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
+
+function fillSelect(el, values) {
+  values.forEach(function (v) {
+    var o = document.createElement('option');
+    o.value = v;
+    o.textContent = v;
+    el.appendChild(o);
+  });
+}
+
+function cardOf(item, est, auth) {
+  var a = document.createElement('a');
+  a.href = item.url || '#';
+  a.target = '_blank';
+  a.rel = 'noopener';
+
+  var card = document.createElement('div');
+  card.className = 'card';
+
+  var thumb = document.createElement('div');
+  thumb.className = 'thumb';
+  if (item.img) thumb.style.backgroundImage = "url('" + item.img + "')";
+  else thumb.textContent = 'без фото';
+
+  var d = Math.round(est.discount * 100);
+  var badge = document.createElement('div');
+  badge.className = 'badge ' + (d >= 35 ? 'good' : d >= 20 ? 'mid' : 'bad');
+  badge.textContent = (d >= 0 ? '−' : '+') + Math.abs(d) + '% к рынку';
+  thumb.appendChild(badge);
+
+  var body = document.createElement('div');
+  body.className = 'body';
+
+  var title = document.createElement('div');
+  title.className = 'title';
+  title.textContent = item.title;
+
+  var meta = document.createElement('div');
+  meta.className = 'meta';
+  var ai = item.ai;
+  var label, labelCls, labelTip;
+  if (ai) {
+    var conf = Math.round((ai.confidence || 0) * 100);
+    if (ai.verdict === 'original') { label = 'ИИ: оригинал ' + conf + '%'; labelCls = ' orig'; }
+    else if (ai.verdict === 'fake') { label = 'ИИ: паль ' + conf + '%'; labelCls = ' fake'; }
+    else { label = 'ИИ не распознал'; labelCls = ' doubt'; }
+    labelTip = (ai.reasons || []).join('; ');
+  } else {
+    label = auth.label === 'паль'
+      ? 'паль ' + Math.round(auth.score * 100) + '%'
+      : auth.label === 'оригинал'
+        ? 'оригинал ' + Math.round((1 - auth.score) * 100) + '%'
+        : 'спорно';
+    labelCls = auth.label === 'паль' ? ' fake' : auth.label === 'оригинал' ? ' orig' : ' doubt';
+    labelTip = (auth.reasons || []).join('; ');
+  }
+
+  var tags = [
+    { text: item.brand, cls: '' },
+    { text: item.size, cls: '' },
+    { text: item.condition === 'new' ? 'новое' : '', cls: '' },
+    { text: item.city, cls: '' },
+    { text: label, cls: labelCls, tip: labelTip }
+  ];
+
+  tags.forEach(function (t) {
+    if (!t.text) return;
+    var s = document.createElement('span');
+    s.className = 'tag' + t.cls;
+    s.textContent = t.text;
+    if (t.tip) s.title = t.tip;
+    meta.appendChild(s);
+  });
+
+  var price = document.createElement('div');
+  price.className = 'price';
+  price.textContent = fmt(item.price);
+
+  var estEl = document.createElement('div');
+  estEl.className = 'est';
+  estEl.innerHTML = 'рынок ≈ <b>' + fmt(est.market) + '</b><br>прибыль: <b style="color:' +
+    (est.profit > 0 ? 'var(--accent)' : 'var(--bad)') + '">' + (est.profit > 0 ? '+' : '') + fmt(est.profit) +
+    '</b><br><span style="opacity:.7">' + est.basis + '</span>';
+
+  body.appendChild(title);
+  body.appendChild(meta);
+  body.appendChild(price);
+  body.appendChild(estEl);
+  card.appendChild(thumb);
+  card.appendChild(body);
+  a.appendChild(card);
+  return a;
+}
+
+function apply() {
+  var q = $('q').value.trim().toLowerCase();
+  var city = $('cityFilter').value;
+  var cat = $('cat').value, brand = $('brand').value, size = $('size').value;
+  var pmin = +$('pmin').value || 0, pmax = +$('pmax').value || Infinity;
+  var photoOnly = $('photoOnly').checked, newOnly = $('newOnly').checked;
+
+  var model = buildModel(DATA.items);
+  var list = DATA.items.map(function (it) {
+    var auth = fakeScore(it, model);
+    return { item: it, auth: auth, est: estimate(it, model, authLabelOf(it, auth) === 'паль') };
+  });
+
+  list = list.filter(function (x) {
+    var it = x.item;
+    if (q && (it.title + ' ' + it.brand).toLowerCase().indexOf(q) < 0) return false;
+    if (city && it.city !== city) return false;
+    if (cat && it.category !== cat) return false;
+    if (brand && it.brand !== brand) return false;
+    if (size && it.size !== size) return false;
+    if (it.price < pmin || it.price > pmax) return false;
+    if (photoOnly && !it.img) return false;
+    if (newOnly && it.condition !== 'new') return false;
+    var lbl = authLabelOf(it, x.auth);
+    if (stateType === 'fake' && lbl !== 'паль') return false;
+    if (stateType === 'orig' && lbl !== 'оригинал') return false;
+    if (stateType === 'doubt' && lbl !== 'спорно') return false;
+    return true;
+  });
+
+  var sort = $('sort').value;
+  list.sort(function (a, b) {
+    if (sort === 'price') return a.item.price - b.item.price;
+    if (sort === 'profit') return b.est.profit - a.est.profit;
+    return b.est.discount - a.est.discount;
+  });
+
+  var grid = $('grid');
+  grid.textContent = '';
+  list.forEach(function (x) { grid.appendChild(cardOf(x.item, x.est, x.auth)); });
+
+  var good = list.filter(function (x) { return Math.round(x.est.discount * 100) >= 35; }).length;
+  var goodFake = list.filter(function (x) {
+    return Math.round(x.est.discount * 100) >= 35 && authLabelOf(x.item, x.auth) === 'паль';
+  }).length;
+  var aiChecked = list.filter(function (x) { return x.item.ai; }).length;
+  $('stats').innerHTML =
+    '<span class="pill"><b>' + list.length + '</b> найдено</span>' +
+    '<span class="pill pill-good"><b>' + good + '</b> выгодных</span>' +
+    (goodFake ? '<span class="pill pill-good">из них паль <b>' + goodFake + '</b></span>' : '') +
+    '<span class="pill">медиана <b>' + fmt(Math.round(model.allMedian)) + '</b></span>' +
+    (aiChecked ? '<span class="pill pill-ai">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
+  $('empty').hidden = list.length > 0;
+}
+
+function uniq(key) {
+  var s = new Set();
+  DATA.items.forEach(function (it) { if (it[key]) s.add(it[key]); });
+  return Array.from(s).sort();
+}
+
+function init() {
+  $('city').textContent = DATA.city || '';
+  var dt = new Date(DATA.updated);
+  $('updated').textContent = 'обновлено: ' + dt.toLocaleString('ru-RU') + ' · ' + DATA.items.length + ' объявлений';
+
+  fillSelect($('cat'), uniq('category'));
+  fillSelect($('brand'), uniq('brand'));
+  fillSelect($('size'), uniq('size'));
+  fillSelect($('cityFilter'), uniq('city'));
+
+  ['q', 'cityFilter', 'cat', 'brand', 'size', 'sort', 'pmin', 'pmax', 'photoOnly', 'newOnly']
+    .forEach(function (id) { $(id).addEventListener('input', apply); });
+
+  $('filtersBtn').addEventListener('click', function () {
+    $('filters').classList.add('open');
+  });
+  $('filtersClose').addEventListener('click', function () {
+    $('filters').classList.remove('open');
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('#typeChips .chip'), function (ch) {
+    ch.addEventListener('click', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('#typeChips .chip'), function (c) { c.classList.remove('on'); });
+      ch.classList.add('on');
+      stateType = ch.dataset.type;
+      apply();
+    });
+  });
+
+
+  apply();
+}
+
+// при открытии пробуем взять свежие данные; если сети нет — остаёмся на вшитых
+function startApp() {
+  if (typeof fetch !== 'function' || location.protocol === 'file:') {
+    init();
+    return;
+  }
+  fetch('data.json?ts=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (fresh) {
+      if (fresh && fresh.items && fresh.items.length) DATA = fresh;
+    })
+    .catch(function () { })
+    .then(function () { init(); });
+}
+
+startApp();
+</script>
+</body>
+</html>
