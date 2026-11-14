@@ -32,5 +32,5 @@
       "slug": "kirov"
     }
   ],
-  "max_requests_per_run": 3
+  "requests_per_route": 1
 }
