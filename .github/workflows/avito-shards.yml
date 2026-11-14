@@ -1,0 +1,30 @@
+name: Avito shards probe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Playwright + Firefox
+        run: |
+          pip install --quiet playwright
+          python -m playwright install --with-deps firefox
+
+      - name: Probe one query
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: python -u probe_shard.py
