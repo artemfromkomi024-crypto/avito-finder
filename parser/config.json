@@ -1,0 +1,36 @@
+{
+  "city": "Сыктывкар",
+  "base": "https://www.avito.ru",
+  "proxy": "socks5://192.168.0.111:10808",
+  "price_min": 1000,
+  "price_max": 20000,
+  "max_items_per_query": 40,
+  "challenge_timeout": 40,
+  "delay_min": 15,
+  "delay_max": 35,
+  "queries": [
+    "шорты мужские",
+    "футболка мужская",
+    "худи мужское",
+    "свитшот мужской",
+    "джинсы мужские",
+    "куртка мужская",
+    "кроссовки мужские",
+    "кепка"
+  ],
+  "cities": [
+    {
+      "name": "Сыктывкар",
+      "slug": "syktyvkar"
+    },
+    {
+      "name": "Ухта",
+      "slug": "ukhta"
+    },
+    {
+      "name": "Киров",
+      "slug": "kirov"
+    }
+  ],
+  "max_requests_per_run": 3
+}
