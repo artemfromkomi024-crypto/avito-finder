@@ -520,6 +520,13 @@ function apply() {
   $('empty').hidden = list.length > 0;
 }
 
+// перерисовка по вводу с задержкой: иначе на каждую букву заново строятся все карточки
+function debounce(fn, ms) {
+  var t = null;
+  return function () { clearTimeout(t); t = setTimeout(fn, ms); };
+}
+var applySoon = debounce(apply, 200);
+
 function updateHeader() {
   $('city').textContent = DATA.city || '';
   var dt = new Date(DATA.updated);
@@ -532,8 +539,11 @@ function init() {
   updateHeader();
   rescore();
 
+  var slow = ['q', 'pmin', 'pmax']; // ввод текста и цифр — с задержкой
   ['q', 'cityFilter', 'cat', 'brand', 'size', 'sort', 'pmin', 'pmax', 'photoOnly', 'newOnly']
-    .forEach(function (id) { $(id).addEventListener('input', apply); });
+    .forEach(function (id) {
+      $(id).addEventListener('input', slow.indexOf(id) >= 0 ? applySoon : apply);
+    });
 
   $('filtersBtn').addEventListener('click', function () {
     $('filters').classList.add('open');
