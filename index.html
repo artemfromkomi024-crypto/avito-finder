@@ -210,6 +210,7 @@ let DATA = {"city": "Сыктывкар", "updated": "2026-11-14T21:18:11", "sou
 
 const $ = function (id) { return document.getElementById(id); };
 let stateType = 'all';
+var GOOD_DISCOUNT = 0.35; // скидка, с которой вещь считаем выгодной
 
 function median(arr) {
   if (!arr.length) return 0;
@@ -218,10 +219,10 @@ function median(arr) {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
-function buildModel(items) {
+function buildModel(items, typeOf) {
   var byKey = new Map(), byCat = new Map(), byBC = new Map(), all = [];
   items.forEach(function (it) {
-    var type = it.fake ? 'fake' : 'orig';
+    var type = typeOf ? typeOf(it) : (it.fake ? 'fake' : 'orig');
     var k1 = it.category + '|' + it.brand + '|' + type;
     var k2 = it.category + '|' + type;
     var k3 = it.category + '|' + it.brand;
@@ -274,14 +275,14 @@ function fakeScore(item, model) {
   return { score: s, label: label, reasons: reasons };
 }
 
-function estimate(item, model) {
-  var type = item.fake ? 'fake' : 'orig';
+function estimate(item, model, isFake) {
+  var type = isFake ? 'fake' : 'orig';
   var g1 = model.byKey.get(item.category + '|' + item.brand + '|' + type) || [];
   var g2 = model.byCat.get(item.category + '|' + type) || [];
   var market, basis;
   if (g1.length >= 3) { market = median(g1); basis = 'по ' + g1.length + ' похожим'; }
   else if (g2.length >= 3) { market = median(g2); basis = 'по категории'; }
-  else { market = model.allMedian * (item.fake ? 0.6 : 1); basis = 'по всему рынку'; }
+  else { market = model.allMedian * (isFake ? 0.6 : 1); basis = 'по всему рынку'; }
 
   return {
     market: Math.round(market),
@@ -289,6 +290,15 @@ function estimate(item, model) {
     profit: Math.round(market * 0.8 * 0.95 - item.price),
     basis: basis
   };
+}
+
+function authLabelOf(item, auth) {
+  if (item.ai) {
+    if (item.ai.verdict === 'original') return 'оригинал';
+    if (item.ai.verdict === 'fake') return 'паль';
+    return 'спорно';
+  }
+  return auth.label;
 }
 
 function fmt(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
@@ -318,7 +328,7 @@ function cardOf(item, est, auth) {
 
   var d = Math.round(est.discount * 100);
   var badge = document.createElement('div');
-  badge.className = 'badge ' + (d >= 40 ? 'good' : d >= 20 ? 'mid' : 'bad');
+  badge.className = 'badge ' + (d >= 35 ? 'good' : d >= 20 ? 'mid' : 'bad');
   badge.textContent = (d >= 0 ? '−' : '+') + Math.abs(d) + '% к рынку';
   thumb.appendChild(badge);
 
@@ -395,7 +405,15 @@ function apply() {
 
   var model = buildModel(DATA.items);
   var list = DATA.items.map(function (it) {
-    return { item: it, est: estimate(it, model), auth: fakeScore(it, model) };
+    return { item: it, auth: fakeScore(it, model) };
+  });
+
+  // рынок считаем отдельно для паль и для оригиналов — по итоговому вердикту
+  list.forEach(function (x) { x.item._lbl = authLabelOf(x.item, x.auth); });
+  var market = buildModel(DATA.items, function (it) { return it._lbl === 'паль' ? 'fake' : 'orig'; });
+  list.forEach(function (x) {
+    x.est = estimate(x.item, market, x.item._lbl === 'паль');
+    delete x.item._lbl;
   });
 
   list = list.filter(function (x) {
@@ -408,9 +426,7 @@ function apply() {
     if (it.price < pmin || it.price > pmax) return false;
     if (photoOnly && !it.img) return false;
     if (newOnly && it.condition !== 'new') return false;
-    var lbl = it.ai
-      ? (it.ai.verdict === 'original' ? 'оригинал' : it.ai.verdict === 'fake' ? 'паль' : 'спорно')
-      : x.auth.label;
+    var lbl = authLabelOf(it, x.auth);
     if (stateType === 'fake' && lbl !== 'паль') return false;
     if (stateType === 'orig' && lbl !== 'оригинал') return false;
     if (stateType === 'doubt' && lbl !== 'спорно') return false;
@@ -428,11 +444,15 @@ function apply() {
   grid.textContent = '';
   list.forEach(function (x) { grid.appendChild(cardOf(x.item, x.est, x.auth)); });
 
-  var good = list.filter(function (x) { return x.est.discount >= 0.4; }).length;
+  var good = list.filter(function (x) { return x.est.discount >= GOOD_DISCOUNT; }).length;
+  var goodFake = list.filter(function (x) {
+    return x.est.discount >= GOOD_DISCOUNT && authLabelOf(x.item, x.auth) === 'паль';
+  }).length;
   var aiChecked = list.filter(function (x) { return x.item.ai; }).length;
   $('stats').innerHTML =
     '<span class="pill"><b>' + list.length + '</b> найдено</span>' +
     '<span class="pill pill-good"><b>' + good + '</b> выгодных</span>' +
+    (goodFake ? '<span class="pill pill-good">из них паль <b>' + goodFake + '</b></span>' : '') +
     '<span class="pill">медиана <b>' + fmt(Math.round(model.allMedian)) + '</b></span>' +
     (aiChecked ? '<span class="pill pill-ai">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
   $('empty').hidden = list.length > 0;
