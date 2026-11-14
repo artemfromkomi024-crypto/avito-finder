@@ -15,6 +15,7 @@
 """
 
 import json
+import hashlib
 import os
 import random
 import re
@@ -84,6 +85,25 @@ CATEGORY_KEYS = {
 
 def now_msk():
     return datetime.now(MOSCOW)
+
+
+URL_ID_RE = re.compile(r"_(\d{6,})(?:[?#]|$)")
+
+
+def normalize_url(url):
+    """Убирает ?context=... — иначе одна и та же вещь попадает в базу дважды."""
+    if not url:
+        return ""
+    return str(url).split("?")[0].split("#")[0]
+
+
+def item_id(url):
+    """Постоянный id: номер объявления из ссылки (одинаковый на ПК и в облаке)."""
+    clean = normalize_url(url)
+    m = URL_ID_RE.search(clean)
+    if m:
+        return "avito-" + m.group(1)
+    return "avito-" + hashlib.md5(clean.encode("utf-8")).hexdigest()[:10]
 
 
 def parse_ts(value):
@@ -196,7 +216,8 @@ def parse_page(page, limit):
             price = int(digits)
 
             href = link_el.get_attribute("href") if link_el else ""
-            url = href if href and href.startswith("http") else ("https://www.avito.ru" + (href or ""))
+            url = normalize_url(href if href and href.startswith("http")
+                                else ("https://www.avito.ru" + (href or "")))
 
             img = ""
             # собираем все варианты картинки: src + srcset + <picture><source>
@@ -234,7 +255,7 @@ def parse_page(page, limit):
             brand = detect_brand(title)
 
             items.append({
-                "id": "avito-" + str(abs(hash(url)) % 10**10),
+                "id": item_id(url),
                 "title": title,
                 "price": price,
                 "brand": brand,
