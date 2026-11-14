@@ -129,7 +129,7 @@ var ORIG_WORDS = ['оригинал', 'ориг', 'с биркой', 'бирка
 
 function fakeScore(item, model) {
   var t = (item.title + ' ' + (item.description || '')).toLowerCase();
-  var s = 0.5; // базовая неопределённость
+  var s = (item.brand && item.brand !== 'NoName') ? 0.32 : 0.68; // базовая неопределённость
   var reasons = [];
 
   FAKE_WORDS.forEach(function (w) {
@@ -139,7 +139,7 @@ function fakeScore(item, model) {
     if (t.indexOf(w) >= 0) { s -= 0.22; reasons.push('в тексте «' + w + '»'); }
   });
 
-  if (!item.brand || item.brand === 'NoName') { s += 0.18; reasons.push('бренд не указан'); }
+  if (!item.brand || item.brand === 'NoName') { reasons.push('бренд не указан'); }
 
   var group = model.byBC.get(item.category + '|' + item.brand) || [];
   if (group.length >= 3) {
