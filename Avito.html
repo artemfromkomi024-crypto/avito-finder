@@ -38,7 +38,9 @@
   .title{font-size:13px;line-height:1.3;max-height:3.4em;overflow:hidden}
   .meta{display:flex;gap:5px;flex-wrap:wrap}
   .tag{font-size:11px;color:var(--muted);background:#141828;border:1px solid var(--line);border-radius:6px;padding:2px 6px}
-  .tag.fake{color:var(--warn);border-color:rgba(255,184,77,.35)}
+  .tag.fake{color:#ff8a8a;border-color:rgba(255,107,107,.4)}
+  .tag.orig{color:var(--accent);border-color:rgba(94,224,138,.4)}
+  .tag.doubt{color:var(--warn);border-color:rgba(255,184,77,.4)}
   .price{font-size:16px;font-weight:700;margin-top:auto}
   .est{font-size:11px;color:var(--muted)}
   .est b{color:var(--text);font-weight:600}
@@ -71,6 +73,7 @@
   <div class="chips" id="typeChips">
     <div class="chip on" data-type="all">Все</div>
     <div class="chip" data-type="orig">Оригинал</div>
+    <div class="chip" data-type="doubt">Спорные</div>
     <div class="chip" data-type="fake">Паль</div>
   </div>
 
@@ -103,18 +106,59 @@ function median(arr) {
 }
 
 function buildModel(items) {
-  var byKey = new Map(), byCat = new Map(), all = [];
+  var byKey = new Map(), byCat = new Map(), byBC = new Map(), all = [];
   items.forEach(function (it) {
     var type = it.fake ? 'fake' : 'orig';
     var k1 = it.category + '|' + it.brand + '|' + type;
     var k2 = it.category + '|' + type;
+    var k3 = it.category + '|' + it.brand;
     if (!byKey.has(k1)) byKey.set(k1, []);
     byKey.get(k1).push(it.price);
     if (!byCat.has(k2)) byCat.set(k2, []);
     byCat.get(k2).push(it.price);
+    if (!byBC.has(k3)) byBC.set(k3, []);
+    byBC.get(k3).push(it.price);
     all.push(it.price);
   });
-  return { byKey: byKey, byCat: byCat, allMedian: median(all) };
+  return { byKey: byKey, byCat: byCat, byBC: byBC, allMedian: median(all) };
+}
+
+/* оценка подлинности: 0 = явный оригинал, 1 = явное паль */
+var FAKE_WORDS = ['паль', 'реплика', 'копія', 'копия', '1:1', 'аналог', 'репл', 'люкс качество', 'качество люкс', 'идентичен'];
+var ORIG_WORDS = ['оригинал', 'ориг', 'с биркой', 'бирка', 'привез', 'европ', 'сша', 'сток', 'бутик'];
+
+function fakeScore(item, model) {
+  var t = (item.title + ' ' + (item.description || '')).toLowerCase();
+  var s = 0.5; // базовая неопределённость
+  var reasons = [];
+
+  FAKE_WORDS.forEach(function (w) {
+    if (t.indexOf(w) >= 0) { s += 0.35; reasons.push('в тексте «' + w + '»'); }
+  });
+  ORIG_WORDS.forEach(function (w) {
+    if (t.indexOf(w) >= 0) { s -= 0.22; reasons.push('в тексте «' + w + '»'); }
+  });
+
+  if (!item.brand || item.brand === 'NoName') { s += 0.18; reasons.push('бренд не указан'); }
+
+  var group = model.byBC.get(item.category + '|' + item.brand) || [];
+  if (group.length >= 3) {
+    var med = median(group);
+    if (item.price < med * 0.45) { s += 0.25; reasons.push('цена ниже 45% медианы бренда'); }
+    else if (item.price > med * 1.6) { s -= 0.1; reasons.push('цена выше рынка'); }
+  }
+
+  if (item.sellerRating) {
+    if (item.sellerRating < 4.5) { s += 0.12; reasons.push('рейтинг продавца ' + item.sellerRating); }
+    else if (item.sellerRating >= 4.9) { s -= 0.08; reasons.push('высокий рейтинг продавца'); }
+  }
+
+  if (!item.img) { s += 0.1; reasons.push('нет фото'); }
+  if (item.size) { s -= 0.03; }
+
+  s = Math.max(0, Math.min(1, s));
+  var label = s >= 0.65 ? 'паль' : s <= 0.35 ? 'оригинал' : 'спорно';
+  return { score: s, label: label, reasons: reasons };
 }
 
 function estimate(item, model) {
@@ -145,7 +189,7 @@ function fillSelect(el, values) {
   });
 }
 
-function cardOf(item, est) {
+function cardOf(item, est, auth) {
   var a = document.createElement('a');
   a.href = item.url || '#';
   a.target = '_blank';
@@ -174,14 +218,28 @@ function cardOf(item, est) {
 
   var meta = document.createElement('div');
   meta.className = 'meta';
-  [item.brand, item.size, item.fake ? 'паль' : '', item.condition === 'new' ? 'новое' : '', item.city]
-    .forEach(function (t) {
-      if (!t) return;
-      var s = document.createElement('span');
-      s.className = 'tag' + (t === 'паль' ? ' fake' : '');
-      s.textContent = t;
-      meta.appendChild(s);
-    });
+  var authText = auth.label === 'паль'
+    ? 'паль ' + Math.round(auth.score * 100) + '%'
+    : auth.label === 'оригинал'
+      ? 'оригинал ' + Math.round((1 - auth.score) * 100) + '%'
+      : 'спорно';
+
+  var tags = [
+    { text: item.brand, cls: '' },
+    { text: item.size, cls: '' },
+    { text: item.condition === 'new' ? 'новое' : '', cls: '' },
+    { text: item.city, cls: '' },
+    { text: authText, cls: auth.label === 'паль' ? ' fake' : auth.label === 'оригинал' ? ' orig' : ' doubt' }
+  ];
+
+  tags.forEach(function (t) {
+    if (!t.text) return;
+    var s = document.createElement('span');
+    s.className = 'tag' + t.cls;
+    s.textContent = t.text;
+    if (auth.reasons && auth.reasons.length) s.title = auth.reasons.join('; ');
+    meta.appendChild(s);
+  });
 
   var price = document.createElement('div');
   price.className = 'price';
@@ -211,7 +269,9 @@ function apply() {
   var photoOnly = $('photoOnly').checked, newOnly = $('newOnly').checked;
 
   var model = buildModel(DATA.items);
-  var list = DATA.items.map(function (it) { return { item: it, est: estimate(it, model) }; });
+  var list = DATA.items.map(function (it) {
+    return { item: it, est: estimate(it, model), auth: fakeScore(it, model) };
+  });
 
   list = list.filter(function (x) {
     var it = x.item;
@@ -223,8 +283,9 @@ function apply() {
     if (it.price < pmin || it.price > pmax) return false;
     if (photoOnly && !it.img) return false;
     if (newOnly && it.condition !== 'new') return false;
-    if (stateType === 'fake' && !it.fake) return false;
-    if (stateType === 'orig' && it.fake) return false;
+    if (stateType === 'fake' && x.auth.label !== 'паль') return false;
+    if (stateType === 'orig' && x.auth.label !== 'оригинал') return false;
+    if (stateType === 'doubt' && x.auth.label !== 'спорно') return false;
     return true;
   });
 
@@ -237,7 +298,7 @@ function apply() {
 
   var grid = $('grid');
   grid.textContent = '';
-  list.forEach(function (x) { grid.appendChild(cardOf(x.item, x.est)); });
+  list.forEach(function (x) { grid.appendChild(cardOf(x.item, x.est, x.auth)); });
 
   var good = list.filter(function (x) { return x.est.discount >= 0.4; }).length;
   $('stats').textContent = 'Найдено: ' + list.length + ' · выгодных (≥40%): ' + good +
