@@ -44,6 +44,7 @@ jobs:
           cd parser
           python -u avito_parser.py --no-proxy || true
           python -u ai_authenticity.py --no-proxy --limit 20 || true
+          python -u normalize_urls.py || true
           python -u build_site.py
           cd ..
           cp Avito.html index.html
