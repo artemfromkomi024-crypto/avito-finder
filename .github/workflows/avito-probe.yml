@@ -1,0 +1,29 @@
+name: Avito probe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Playwright + Firefox
+        run: |
+          pip install --quiet playwright
+          python -m playwright install --with-deps firefox
+
+      - name: Probe Avito
+        run: python probe_avito.py
+
+      - name: Runner IP
+        if: always()
+        run: |
+          curl -s https://api.ipify.org || true
+          echo
