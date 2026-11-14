@@ -237,7 +237,7 @@ function cardOf(item, est, auth) {
     var s = document.createElement('span');
     s.className = 'tag' + t.cls;
     s.textContent = t.text;
-    if (auth.reasons && auth.reasons.length) s.title = auth.reasons.join('; ');
+    if (t.cls && auth.reasons && auth.reasons.length) s.title = auth.reasons.join('; ');
     meta.appendChild(s);
   });
 
