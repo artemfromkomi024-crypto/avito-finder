@@ -48,14 +48,34 @@
   .empty{color:var(--muted);text-align:center;padding:40px 10px}
   footer{position:fixed;bottom:0;left:0;right:0;background:#0f1220;border-top:1px solid var(--line);
          padding:8px 14px;font-size:11px;color:var(--muted);text-align:center}
+  .filter-btn{display:none;background:var(--card2);border:1px solid var(--line);color:var(--text);
+              border-radius:10px;padding:8px 12px;font-size:13px;cursor:pointer;margin-top:8px}
+  .filters{display:block}
+  .filters .head{display:none}
+  @media (max-width:700px){
+    header{padding:10px 12px}
+    .filter-btn{display:inline-block}
+    .filters{position:fixed;left:0;right:0;top:0;z-index:40;background:#0f1220;
+             border-bottom:1px solid var(--line);padding:10px 14px 14px;max-height:70vh;overflow-y:auto;
+             transform:translateY(-115%);transition:transform .22s ease;box-shadow:0 12px 30px rgba(0,0,0,.6)}
+    .filters.open{transform:translateY(0)}
+    .filters .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .filters .head b{font-size:14px}
+    .filters .head button{background:none;border:0;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  }
 </style>
 </head>
 <body>
 <header>
   <h1>Авито-Финдер <span class="muted" id="city"></span></h1>
   <div class="muted" id="updated"></div>
+  <button class="filter-btn" id="filtersBtn">Фильтры</button>
 
-  <div class="controls">
+  <div class="filters" id="filters">
+    <div class="head"><b>Фильтры</b><button id="filtersClose" aria-label="Закрыть">×</button></div>
+
+    <div class="controls">
     <input class="wide" id="q" type="search" placeholder="Поиск: бренд, вещь, слово">
     <select id="cityFilter"><option value="">Все города</option></select>
     <select id="cat"><option value="">Все категории</option></select>
@@ -80,6 +100,7 @@
   <div class="row">
     <label class="toggle"><input type="checkbox" id="photoOnly" checked> только с фото</label>
     <label class="toggle"><input type="checkbox" id="newOnly"> только новое</label>
+  </div>
   </div>
 
   <div id="stats"></div>
@@ -324,6 +345,13 @@ function init() {
 
   ['q', 'cityFilter', 'cat', 'brand', 'size', 'sort', 'pmin', 'pmax', 'photoOnly', 'newOnly']
     .forEach(function (id) { $(id).addEventListener('input', apply); });
+
+  $('filtersBtn').addEventListener('click', function () {
+    $('filters').classList.add('open');
+  });
+  $('filtersClose').addEventListener('click', function () {
+    $('filters').classList.remove('open');
+  });
 
   Array.prototype.forEach.call(document.querySelectorAll('#typeChips .chip'), function (ch) {
     ch.addEventListener('click', function () {
