@@ -203,13 +203,15 @@
   <div class="empty" id="empty" hidden>Ничего не найдено — ослабь фильтры</div>
 </main>
 
-<footer>Оценка рынка — медиана похожих объявлений. Обновляется 3 раза в день.</footer>
+<footer>Оценка рынка — медиана похожих объявлений. Обновляется несколько раз в день.</footer>
 
 <script>
 let DATA = __DATA__;
 
 const $ = function (id) { return document.getElementById(id); };
 let stateType = 'all';
+let MODEL = null;      // медианы по категориям и брендам
+let SCORED = [];       // объявления с готовой оценкой подлинности и выгодности
 var GOOD_DISCOUNT = 0.35; // скидка, с которой вещь считаем выгодной
 
 function median(arr) {
@@ -407,35 +409,91 @@ function cardOf(item, est, auth) {
   return a;
 }
 
+/* ---------- фильтры: показываем только то, что реально есть в базе ---------- */
+
+function readFilters() {
+  return {
+    q: $('q').value.trim().toLowerCase(),
+    city: $('cityFilter').value,
+    cat: $('cat').value,
+    brand: $('brand').value,
+    size: $('size').value,
+    pmin: +$('pmin').value || 0,
+    pmax: +$('pmax').value || Infinity,
+    photoOnly: $('photoOnly').checked,
+    newOnly: $('newOnly').checked
+  };
+}
+
+// skip — измерение, которое сейчас не учитываем (чтобы выбрать другой вариант в нём же)
+function matches(it, auth, f, skip) {
+  if (skip !== 'q' && f.q && (it.title + ' ' + it.brand).toLowerCase().indexOf(f.q) < 0) return false;
+  if (skip !== 'city' && f.city && it.city !== f.city) return false;
+  if (skip !== 'cat' && f.cat && it.category !== f.cat) return false;
+  if (skip !== 'brand' && f.brand && it.brand !== f.brand) return false;
+  if (skip !== 'size' && f.size && it.size !== f.size) return false;
+  if (it.price < f.pmin || it.price > f.pmax) return false;
+  if (f.photoOnly && !it.img) return false;
+  if (f.newOnly && it.condition !== 'new') return false;
+  var lbl = authLabelOf(it, auth);
+  if (stateType === 'fake' && lbl !== 'паль') return false;
+  if (stateType === 'orig' && lbl !== 'оригинал') return false;
+  if (stateType === 'doubt' && lbl !== 'спорно') return false;
+  return true;
+}
+
+// значения, доступные при текущих фильтрах (сам фильтр skip не учитываем)
+function optionsFor(key, f, skip) {
+  var seen = new Set();
+  SCORED.forEach(function (x) {
+    if (!matches(x.item, x.auth, f, skip)) return;
+    var v = x.item[key];
+    if (v) seen.add(v);
+  });
+  var arr = Array.from(seen);
+  arr.sort(function (a, b) { return String(a).localeCompare(String(b), 'ru'); });
+  return arr;
+}
+
+// пересобрать список вариантов; пропавшее значение сбрасывает фильтр в «Все ...»
+function setOptions(el, values) {
+  var current = el.value;
+  while (el.options.length > 1) el.remove(1);
+  var frag = document.createDocumentFragment();
+  values.forEach(function (v) {
+    var o = document.createElement('option');
+    o.value = v;
+    o.textContent = v;
+    frag.appendChild(o);
+  });
+  el.appendChild(frag);
+  el.value = values.indexOf(current) >= 0 ? current : '';
+  return el.value;
+}
+
+function syncFilters() {
+  var f = readFilters();
+  // два прохода: после сброса одного фильтра наборы остальных могут расшириться
+  for (var pass = 0; pass < 2; pass++) {
+    f.cat = setOptions($('cat'), optionsFor('category', f, 'cat'));
+    f.brand = setOptions($('brand'), optionsFor('brand', f, 'brand'));
+    f.size = setOptions($('size'), optionsFor('size', f, 'size'));
+    f.city = setOptions($('cityFilter'), optionsFor('city', f, 'city'));
+  }
+  return readFilters();
+}
+
+function rescore() {
+  MODEL = buildModel(DATA.items);
+  SCORED = DATA.items.map(function (it) {
+    var auth = fakeScore(it, MODEL);
+    return { item: it, auth: auth, est: estimate(it, MODEL, authLabelOf(it, auth) === 'паль') };
+  });
+}
+
 function apply() {
-  var q = $('q').value.trim().toLowerCase();
-  var city = $('cityFilter').value;
-  var cat = $('cat').value, brand = $('brand').value, size = $('size').value;
-  var pmin = +$('pmin').value || 0, pmax = +$('pmax').value || Infinity;
-  var photoOnly = $('photoOnly').checked, newOnly = $('newOnly').checked;
-
-  var model = buildModel(DATA.items);
-  var list = DATA.items.map(function (it) {
-    var auth = fakeScore(it, model);
-    return { item: it, auth: auth, est: estimate(it, model, authLabelOf(it, auth) === 'паль') };
-  });
-
-  list = list.filter(function (x) {
-    var it = x.item;
-    if (q && (it.title + ' ' + it.brand).toLowerCase().indexOf(q) < 0) return false;
-    if (city && it.city !== city) return false;
-    if (cat && it.category !== cat) return false;
-    if (brand && it.brand !== brand) return false;
-    if (size && it.size !== size) return false;
-    if (it.price < pmin || it.price > pmax) return false;
-    if (photoOnly && !it.img) return false;
-    if (newOnly && it.condition !== 'new') return false;
-    var lbl = authLabelOf(it, x.auth);
-    if (stateType === 'fake' && lbl !== 'паль') return false;
-    if (stateType === 'orig' && lbl !== 'оригинал') return false;
-    if (stateType === 'doubt' && lbl !== 'спорно') return false;
-    return true;
-  });
+  var f = syncFilters();
+  var list = SCORED.filter(function (x) { return matches(x.item, x.auth, f); });
 
   var sort = $('sort').value;
   list.sort(function (a, b) {
@@ -457,28 +515,22 @@ function apply() {
     '<span class="pill"><b>' + list.length + '</b> найдено</span>' +
     '<span class="pill pill-good"><b>' + good + '</b> выгодных</span>' +
     (goodFake ? '<span class="pill pill-good">из них паль <b>' + goodFake + '</b></span>' : '') +
-    '<span class="pill">медиана <b>' + fmt(Math.round(model.allMedian)) + '</b></span>' +
+    '<span class="pill">медиана <b>' + fmt(Math.round(MODEL ? MODEL.allMedian : 0)) + '</b></span>' +
     (aiChecked ? '<span class="pill pill-ai">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
   $('empty').hidden = list.length > 0;
 }
 
-function uniq(key) {
-  var s = new Set();
-  DATA.items.forEach(function (it) { if (it[key]) s.add(it[key]); });
-  return Array.from(s).sort();
-}
-
-function init() {
+function updateHeader() {
   $('city').textContent = DATA.city || '';
   var dt = new Date(DATA.updated);
   var when = isNaN(dt) ? String(DATA.updated || '')
                        : dt.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }) + ' МСК';
   $('updated').textContent = 'обновлено: ' + when + ' · ' + DATA.items.length + ' объявлений';
+}
 
-  fillSelect($('cat'), uniq('category'));
-  fillSelect($('brand'), uniq('brand'));
-  fillSelect($('size'), uniq('size'));
-  fillSelect($('cityFilter'), uniq('city'));
+function init() {
+  updateHeader();
+  rescore();
 
   ['q', 'cityFilter', 'cat', 'brand', 'size', 'sort', 'pmin', 'pmax', 'photoOnly', 'newOnly']
     .forEach(function (id) { $(id).addEventListener('input', apply); });
@@ -499,8 +551,29 @@ function init() {
     });
   });
 
-
   apply();
+}
+
+/* ---------- автообновление: подхватываем новый каталог без перезагрузки ---------- */
+
+var REFRESH_EVERY = 120000; // раз в 2 минуты
+var pulling = false;
+
+function pullFresh() {
+  if (pulling || typeof fetch !== 'function' || location.protocol === 'file:') return;
+  pulling = true;
+  fetch('data.json?ts=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (fresh) {
+      if (!fresh || !fresh.items || !fresh.items.length) return;
+      if (String(fresh.updated) === String(DATA.updated)) return;
+      DATA = fresh;
+      rescore();
+      updateHeader();
+      apply(); // фильтры пересоберутся, пропавшие значения сбросятся в «Все ...»
+    })
+    .catch(function () { })
+    .then(function () { pulling = false; });
 }
 
 // при открытии пробуем взять свежие данные; если сети нет — остаёмся на вшитых
@@ -515,7 +588,13 @@ function startApp() {
       if (fresh && fresh.items && fresh.items.length) DATA = fresh;
     })
     .catch(function () { })
-    .then(function () { init(); });
+    .then(function () {
+      init();
+      setInterval(function () { if (!document.hidden) pullFresh(); }, REFRESH_EVERY);
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) pullFresh();
+      });
+    });
 }
 
 startApp();
