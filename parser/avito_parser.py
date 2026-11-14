@@ -246,13 +246,13 @@ def check_proxy(cfg, timeout=6):
 
 def main():
     cfg = load_config()
+    if "--no-proxy" in sys.argv:
+        cfg["proxy"] = ""
+        print("режим: без прокси (прямое подключение)")
     ok, msg = check_proxy(cfg)
     print(msg)
     if not ok:
         return 3
-    if "--no-proxy" in sys.argv:
-        cfg["proxy"] = ""
-        print("режим: без прокси (прямое подключение)")
     limit = cfg.get("max_items_per_query", 40)
     print(f"Старт: {datetime.now():%Y-%m-%d %H:%M} · запросов: {len(cfg['queries'])}")
 
