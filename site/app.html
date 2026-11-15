@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f1220">
+<meta name="description" content="Авито-Финдер — выгодные вещи с Авито: оценка рынка, скидка и проверка подлинности по фото.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Авито-Финдер">
+<meta property="og:description" content="Выгодные вещи с Авито: оценка рынка, скидка и проверка подлинности.">
 <title>Авито-Финдер</title>
 <style>
   :root{
@@ -56,6 +60,7 @@
   .chip{
     white-space:nowrap;background:var(--card2);border:1px solid var(--line);color:var(--muted);
     padding:7px 13px;border-radius:999px;font-size:13px;cursor:pointer;user-select:none;
+    font:inherit;font-size:13px;appearance:none;-webkit-appearance:none;
     transition:color .15s ease,border-color .15s ease,background .15s ease;
   }
   .chip:hover{color:var(--text);border-color:var(--line2)}
@@ -114,6 +119,45 @@
   .tag.fake{color:#fca5a5;background:rgba(248,113,113,.10);border-color:rgba(248,113,113,.30)}
   .tag.orig{color:#86efac;background:rgba(74,222,128,.10);border-color:rgba(74,222,128,.30)}
   .tag.doubt{color:#fcd34d;background:rgba(251,191,36,.10);border-color:rgba(251,191,36,.28)}
+  .tag.auth{cursor:pointer;border-style:dashed}
+  .tag.auth:hover,.tag.auth:focus-visible{filter:brightness(1.18)}
+  .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .est .basis{opacity:.72}
+  .more{
+    display:block;width:100%;margin:20px 0 8px;padding:13px;font:inherit;font-size:14px;font-weight:600;
+    color:var(--text);background:var(--card2);border:1px solid var(--line2);border-radius:13px;
+    cursor:pointer;transition:border-color .15s ease,color .15s ease;
+  }
+  .more:hover{border-color:rgba(74,222,128,.5);color:var(--accent)}
+  .more[hidden]{display:none}
+  .reset{font:inherit;font-size:13px;color:var(--muted);background:transparent;border:1px dashed var(--line2);
+         border-radius:11px;padding:7px 11px;cursor:pointer}
+  .reset:hover{color:var(--text);border-color:var(--line2)}
+  .reset[hidden]{display:none}
+  .modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px;
+         background:rgba(5,7,12,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .modal[hidden]{display:none}
+  .modal-card{
+    width:100%;max-width:520px;max-height:82vh;overflow:auto;padding:16px;
+    background:#121623;border:1px solid var(--line2);border-radius:18px;box-shadow:var(--shadow);
+  }
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .modal-head b{font-size:15px;font-weight:650}
+  .modal-head button{
+    flex:none;width:30px;height:30px;border-radius:50%;font-size:17px;line-height:1;cursor:pointer;
+    background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);
+  }
+  .modal-title{font-size:13px;font-weight:600;line-height:1.35;margin-bottom:4px}
+  .modal-sub{font-size:11.5px;color:var(--muted);margin-bottom:10px}
+  .verdict{display:inline-block;font-size:12px;font-weight:650;padding:4px 10px;border-radius:999px;margin-bottom:10px}
+  .verdict.fake{color:#fca5a5;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.32)}
+  .verdict.orig{color:#86efac;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.32)}
+  .verdict.doubt{color:#fcd34d;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.30)}
+  .verdict.none{color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line)}
+  .modal-body ul{margin:6px 0 0;padding-left:18px}
+  .modal-body li{margin:4px 0}
+  .modal-body .note{color:var(--muted);font-size:11.5px;margin-top:12px;line-height:1.5}
+  body.locked{overflow:hidden}
   .price{font-size:17px;font-weight:700;letter-spacing:-.2px;margin-top:auto}
   .est{font-size:11px;color:var(--muted);line-height:1.55}
   a{color:inherit;text-decoration:none}
@@ -184,18 +228,20 @@
     <input id="pmax" type="number" placeholder="Цена до" value="20000">
   </div>
 
-  <div class="chips" id="typeChips">
-    <div class="chip on" data-type="all">Все</div>
-    <div class="chip" data-type="orig">Оригинал</div>
-    <div class="chip" data-type="doubt">Спорные</div>
-    <div class="chip" data-type="fake">Паль</div>
-    <div class="chip" data-type="nobrand">Без бренда</div>
+  <div class="chips" id="typeChips" role="group" aria-label="Подлинность">
+    <button type="button" class="chip on" data-type="all" aria-pressed="true">Все</button>
+    <button type="button" class="chip" data-type="orig" aria-pressed="false">Оригинал</button>
+    <button type="button" class="chip" data-type="doubt" aria-pressed="false">Спорные</button>
+    <button type="button" class="chip" data-type="fake" aria-pressed="false">Паль</button>
+    <button type="button" class="chip" data-type="nobrand" aria-pressed="false">Без бренда</button>
   </div>
 
 
   <div class="row">
     <label class="toggle"><input type="checkbox" id="photoOnly" checked> только с фото</label>
     <label class="toggle"><input type="checkbox" id="newOnly"> только новое</label>
+    <label class="toggle"><input type="checkbox" id="goodOnly"> только выгодные</label>
+    <button type="button" class="reset" id="resetBtn" hidden>сбросить</button>
   </div>
   <div class="sig">Afanasov INC.</div>
   </div>
@@ -205,8 +251,19 @@
 
 <main>
   <div class="grid" id="grid"></div>
+  <button type="button" class="more" id="more" hidden></button>
   <div class="empty" id="empty" hidden>Ничего не найдено — ослабь фильтры</div>
 </main>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <b id="modalTitle">Проверка подлинности</b>
+      <button type="button" id="modalClose" aria-label="Закрыть">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
 
 <footer>Afanasov INC.</footer>
 
@@ -328,15 +385,6 @@ function authLabelOf(item, auth) {
 
 function fmt(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
 
-function fillSelect(el, values) {
-  values.forEach(function (v) {
-    var o = document.createElement('option');
-    o.value = v;
-    o.textContent = v;
-    el.appendChild(o);
-  });
-}
-
 function cardOf(item, est, auth) {
   var a = document.createElement('a');
   a.href = item.url || '#';
@@ -348,8 +396,17 @@ function cardOf(item, est, auth) {
 
   var thumb = document.createElement('div');
   thumb.className = 'thumb';
-  if (item.img) thumb.style.backgroundImage = "url('" + item.img + "')";
-  else thumb.textContent = 'без фото';
+  if (item.img) {
+    var im = document.createElement('img');
+    im.loading = 'lazy';       // фото грузятся по мере прокрутки, а не все 400 сразу
+    im.decoding = 'async';
+    im.alt = '';
+    im.onerror = function () { im.remove(); thumb.textContent = 'фото не загрузилось'; };
+    im.src = item.img;
+    thumb.appendChild(im);
+  } else {
+    thumb.textContent = 'без фото';
+  }
 
   var d = Math.round(est.discount * 100);
   var badge = document.createElement('div');
@@ -389,13 +446,13 @@ function cardOf(item, est, auth) {
   }
 
   var tags = [
-    { text: item.brand, cls: '', tip: lbl === NO_BRAND ? labelTip : '' },
+    { text: item.brand, cls: '', tip: lbl === NO_BRAND ? labelTip : '', act: lbl === NO_BRAND },
     { text: item.size, cls: '' },
     { text: item.condition === 'new' ? 'новое' : '', cls: '' },
     { text: item.city, cls: '' }
   ];
   // у вещей без бренда метка уже видна в поле бренда — второй раз не пишем
-  if (lbl !== NO_BRAND) tags.push({ text: label, cls: labelCls, tip: labelTip });
+  if (lbl !== NO_BRAND) tags.push({ text: label, cls: labelCls, tip: labelTip, act: true });
 
   tags.forEach(function (t) {
     if (!t.text) return;
@@ -403,6 +460,20 @@ function cardOf(item, est, auth) {
     s.className = 'tag' + t.cls;
     s.textContent = t.text;
     if (t.tip) s.title = t.tip;
+    if (t.act) {
+      s.classList.add('auth');
+      s.setAttribute('role', 'button');
+      s.setAttribute('tabindex', '0');
+      s.setAttribute('aria-label', t.text + ' — почему такой вердикт');
+      s.addEventListener('click', function (ev) {
+        ev.preventDefault(); ev.stopPropagation(); openAuth(item, auth);
+      });
+      s.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault(); ev.stopPropagation(); openAuth(item, auth);
+        }
+      });
+    }
     meta.appendChild(s);
   });
 
@@ -412,9 +483,10 @@ function cardOf(item, est, auth) {
 
   var estEl = document.createElement('div');
   estEl.className = 'est';
+  estEl.title = 'Оценка: медиана похожих объявлений минус 20% на торг и 5% на комиссию. Ориентир, а не гарантия.';
   estEl.innerHTML = 'рынок ≈ <b>' + fmt(est.market) + '</b><br>прибыль: <b style="color:' +
     (est.profit > 0 ? 'var(--accent)' : 'var(--bad)') + '">' + (est.profit > 0 ? '+' : '') + fmt(est.profit) +
-    '</b><br><span style="opacity:.7">' + est.basis + '</span>';
+    '</b><br><span class="basis">' + est.basis + '</span>';
 
   body.appendChild(title);
   body.appendChild(meta);
@@ -438,13 +510,16 @@ function readFilters() {
     pmin: +$('pmin').value || 0,
     pmax: +$('pmax').value || Infinity,
     photoOnly: $('photoOnly').checked,
-    newOnly: $('newOnly').checked
+    newOnly: $('newOnly').checked,
+    goodOnly: $('goodOnly').checked
   };
 }
 
+// x — объявление вместе с оценкой: { item, auth, est }
 // skip — измерение, которое сейчас не учитываем (чтобы выбрать другой вариант в нём же)
-function matches(it, auth, f, skip) {
-  if (skip !== 'q' && f.q && (it.title + ' ' + it.brand).toLowerCase().indexOf(f.q) < 0) return false;
+function matches(x, f, skip) {
+  var it = x.item;
+  if (skip !== 'q' && f.q && (it.title + ' ' + it.brand + ' ' + it.category).toLowerCase().indexOf(f.q) < 0) return false;
   if (skip !== 'city' && f.city && it.city !== f.city) return false;
   if (skip !== 'cat' && f.cat && it.category !== f.cat) return false;
   if (skip !== 'brand' && f.brand && it.brand !== f.brand) return false;
@@ -452,7 +527,8 @@ function matches(it, auth, f, skip) {
   if (it.price < f.pmin || it.price > f.pmax) return false;
   if (f.photoOnly && !it.img) return false;
   if (f.newOnly && it.condition !== 'new') return false;
-  var lbl = authLabelOf(it, auth);
+  if (f.goodOnly && Math.round(x.est.discount * 100) < 35) return false;
+  var lbl = authLabelOf(it, x.auth);
   if (stateType === 'fake' && lbl !== 'паль') return false;
   if (stateType === 'orig' && lbl !== 'оригинал') return false;
   if (stateType === 'doubt' && lbl !== 'спорно') return false;
@@ -460,28 +536,28 @@ function matches(it, auth, f, skip) {
   return true;
 }
 
-// значения, доступные при текущих фильтрах (сам фильтр skip не учитываем)
+// значения, доступные при текущих фильтрах, вместе с количеством (сам фильтр skip не учитываем)
 function optionsFor(key, f, skip) {
-  var seen = new Set();
+  var counts = new Map();
   SCORED.forEach(function (x) {
-    if (!matches(x.item, x.auth, f, skip)) return;
+    if (!matches(x, f, skip)) return;
     var v = x.item[key];
-    if (v) seen.add(v);
+    if (v) counts.set(v, (counts.get(v) || 0) + 1);
   });
-  var arr = Array.from(seen);
-  arr.sort(function (a, b) { return String(a).localeCompare(String(b), 'ru'); });
-  return arr;
+  return counts;
 }
 
 // пересобрать список вариантов; пропавшее значение сбрасывает фильтр в «Все ...»
-function setOptions(el, values) {
+function setOptions(el, counts, withCount) {
   var current = el.value;
+  var values = Array.from(counts.keys());
+  values.sort(function (a, b) { return String(a).localeCompare(String(b), 'ru'); });
   while (el.options.length > 1) el.remove(1);
   var frag = document.createDocumentFragment();
   values.forEach(function (v) {
     var o = document.createElement('option');
     o.value = v;
-    o.textContent = v;
+    o.textContent = withCount ? v + ' · ' + counts.get(v) : v;
     frag.appendChild(o);
   });
   el.appendChild(frag);
@@ -493,10 +569,10 @@ function syncFilters() {
   var f = readFilters();
   // два прохода: после сброса одного фильтра наборы остальных могут расшириться
   for (var pass = 0; pass < 2; pass++) {
-    f.cat = setOptions($('cat'), optionsFor('category', f, 'cat'));
-    f.brand = setOptions($('brand'), optionsFor('brand', f, 'brand'));
-    f.size = setOptions($('size'), optionsFor('size', f, 'size'));
-    f.city = setOptions($('cityFilter'), optionsFor('city', f, 'city'));
+    f.cat = setOptions($('cat'), optionsFor('category', f, 'cat'), true);
+    f.brand = setOptions($('brand'), optionsFor('brand', f, 'brand'), true);
+    f.size = setOptions($('size'), optionsFor('size', f, 'size'), false);
+    f.city = setOptions($('cityFilter'), optionsFor('city', f, 'city'), true);
   }
   return readFilters();
 }
@@ -513,9 +589,90 @@ function rescore() {
   });
 }
 
-function apply() {
+/* ---------- вывод карточек порциями ---------- */
+
+var PAGE = 48;
+var currentList = [];
+var shown = 0;
+var FILTERS_KEY = 'avito.filters.v1';
+var FILTER_FIELDS = ['q', 'cityFilter', 'cat', 'brand', 'size', 'sort', 'pmin', 'pmax'];
+var pendingSelects = null;
+
+function renderChunk() {
+  var slice = currentList.slice(shown, shown + PAGE);
+  var frag = document.createDocumentFragment();
+  slice.forEach(function (x) { frag.appendChild(cardOf(x.item, x.est, x.auth)); });
+  $('grid').appendChild(frag);
+  shown += slice.length;
+  var left = currentList.length - shown;
+  var more = $('more');
+  more.hidden = left <= 0;
+  if (left > 0) more.textContent = 'Показать ещё · осталось ' + left;
+}
+
+/* ---------- запоминаем фильтры между визитами ---------- */
+
+function saveFilters() {
+  try {
+    var o = {};
+    FILTER_FIELDS.forEach(function (id) { o[id] = $(id).value; });
+    o.photoOnly = $('photoOnly').checked;
+    o.newOnly = $('newOnly').checked;
+    o.goodOnly = $('goodOnly').checked;
+    o.type = stateType;
+    localStorage.setItem(FILTERS_KEY, JSON.stringify(o));
+  } catch (e) { }
+}
+
+function loadFilters() {
+  try {
+    var o = JSON.parse(localStorage.getItem(FILTERS_KEY) || 'null');
+    if (!o) return;
+    if (typeof o.q === 'string' && o.q) $('q').value = o.q;
+    ['pmin', 'pmax'].forEach(function (id) {
+      if (typeof o[id] === 'string') $(id).value = o[id];
+    });
+    if (typeof o.sort === 'string' && o.sort) $('sort').value = o.sort;
+    if (typeof o.photoOnly === 'boolean') $('photoOnly').checked = o.photoOnly;
+    if (typeof o.newOnly === 'boolean') $('newOnly').checked = o.newOnly;
+    if (typeof o.goodOnly === 'boolean') $('goodOnly').checked = o.goodOnly;
+    if (o.type) setStateType(o.type);
+    pendingSelects = { cat: o.cat, brand: o.brand, size: o.size, cityFilter: o.cityFilter };
+  } catch (e) { }
+}
+
+function setStateType(t) {
+  stateType = t || 'all';
+  Array.prototype.forEach.call(document.querySelectorAll('#typeChips .chip'), function (c) {
+    var on = c.dataset.type === stateType;
+    c.classList.toggle('on', on);
+    c.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+
+function isDirty() {
+  return !!($('q').value.trim() || $('cityFilter').value || $('cat').value || $('brand').value || $('size').value ||
+    $('sort').value !== 'discount' || $('pmin').value !== '1000' || $('pmax').value !== '20000' ||
+    !$('photoOnly').checked || $('newOnly').checked || $('goodOnly').checked || stateType !== 'all');
+}
+
+function resetFilters() {
+  $('q').value = '';
+  $('cat').value = ''; $('brand').value = ''; $('size').value = ''; $('cityFilter').value = '';
+  $('sort').value = 'discount';
+  $('pmin').value = '1000';
+  $('pmax').value = '20000';
+  $('photoOnly').checked = true;
+  $('newOnly').checked = false;
+  $('goodOnly').checked = false;
+  setStateType('all');
+  apply();
+}
+
+function apply(keepShown) {
+  var prevShown = keepShown ? shown : 0;
   var f = syncFilters();
-  var list = SCORED.filter(function (x) { return matches(x.item, x.auth, f); });
+  var list = SCORED.filter(function (x) { return matches(x, f); });
 
   var sort = $('sort').value;
   list.sort(function (a, b) {
@@ -524,9 +681,12 @@ function apply() {
     return b.est.discount - a.est.discount;
   });
 
-  var grid = $('grid');
-  grid.textContent = '';
-  list.forEach(function (x) { grid.appendChild(cardOf(x.item, x.est, x.auth)); });
+  currentList = list;
+  shown = 0;
+  $('grid').textContent = '';
+  var target = keepShown ? Math.min(prevShown, list.length) : Math.min(PAGE, list.length);
+  if (!target) target = Math.min(PAGE, list.length); // после обновления всегда показываем хотя бы первую порцию
+  while (shown < target) renderChunk();
 
   var good = list.filter(function (x) { return Math.round(x.est.discount * 100) >= 35; }).length;
   var goodFake = list.filter(function (x) {
@@ -542,6 +702,8 @@ function apply() {
     '<span class="pill">медиана <b>' + fmt(Math.round(MODEL ? MODEL.allMedian : 0)) + '</b></span>' +
     (aiChecked ? '<span class="pill pill-ai">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
   $('empty').hidden = list.length > 0;
+  $('resetBtn').hidden = !isDirty();
+  saveFilters();
 }
 
 // перерисовка по вводу с задержкой: иначе на каждую букву заново строятся все карточки
@@ -559,33 +721,147 @@ function updateHeader() {
   $('updated').textContent = 'обновлено: ' + when + ' · ' + DATA.items.length + ' объявлений';
 }
 
+/* ---------- окно «почему такой вердикт» ---------- */
+
+function openAuth(item, auth) {
+  var lbl = authLabelOf(item, auth);
+  var ai = item.ai;
+  var body = $('modalBody');
+  body.textContent = '';
+
+  var title = document.createElement('div');
+  title.className = 'modal-title';
+  title.textContent = item.title;
+  body.appendChild(title);
+
+  var sub = document.createElement('div');
+  sub.className = 'modal-sub';
+  sub.textContent = [item.brand, fmt(item.price), item.city].filter(Boolean).join(' · ');
+  body.appendChild(sub);
+
+  var v = document.createElement('div');
+  if (lbl === NO_BRAND) {
+    v.className = 'verdict none';
+    v.textContent = 'Без бренда';
+  } else if (ai) {
+    var conf = Math.round((ai.confidence || 0) * 100);
+    v.className = 'verdict ' + (ai.verdict === 'fake' ? 'fake' : ai.verdict === 'original' ? 'orig' : 'doubt');
+    v.textContent = ai.verdict === 'fake' ? 'ИИ: паль ' + conf + '%'
+      : ai.verdict === 'original' ? 'ИИ: оригинал ' + conf + '%'
+      : 'ИИ не распознал · ' + conf + '%';
+  } else {
+    v.className = 'verdict ' + (lbl === 'паль' ? 'fake' : lbl === 'оригинал' ? 'orig' : 'doubt');
+    v.textContent = lbl === 'паль' ? 'Паль ' + Math.round(auth.score * 100) + '%'
+      : lbl === 'оригинал' ? 'Оригинал ' + Math.round((1 - auth.score) * 100) + '%'
+      : 'Спорно';
+  }
+  body.appendChild(v);
+
+  var why = document.createElement('div');
+  if (lbl === NO_BRAND) {
+    why.textContent = 'В объявлении не указан бренд, поэтому проверять подлинность нечего. Это не подделка — просто вещь без бренда.';
+  } else if (ai) {
+    why.textContent = 'Вердикт ИИ' + (ai.model ? ' (' + ai.model + ')' : '') + (ai.at ? ', ' + ai.at : '') + '. Причины:';
+  } else {
+    why.textContent = 'Проверка без ИИ — по признакам объявления. Причины:';
+  }
+  body.appendChild(why);
+
+  var reasons = lbl === NO_BRAND ? [] : (ai ? (ai.reasons || []) : (auth.reasons || []));
+  if (reasons.length) {
+    var ul = document.createElement('ul');
+    reasons.forEach(function (r) {
+      var li = document.createElement('li');
+      li.textContent = r;
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+  }
+
+  if (ai && ai.red_flags && ai.red_flags.length) {
+    var rf = document.createElement('div');
+    rf.className = 'note';
+    rf.textContent = 'Красные флаги: ' + ai.red_flags.join('; ');
+    body.appendChild(rf);
+  }
+
+  var note = document.createElement('div');
+  note.className = 'note';
+  note.textContent = 'Оценка автоматическая и может ошибаться. Самый сильный признак — цена: оригинал дорогого бренда за пару тысяч рублей не продают.';
+  body.appendChild(note);
+
+  $('modal').hidden = false;
+}
+
+function closeModal() {
+  $('modal').hidden = true;
+}
+
+function openFilters() {
+  $('filters').classList.add('open');
+  if (window.matchMedia('(max-width:700px)').matches) document.body.classList.add('locked');
+}
+
+function closeFilters() {
+  $('filters').classList.remove('open');
+  document.body.classList.remove('locked');
+}
+
 function init() {
   updateHeader();
   rescore();
+  loadFilters();
 
   var slow = ['q', 'pmin', 'pmax']; // ввод текста и цифр — с задержкой
-  ['q', 'cityFilter', 'cat', 'brand', 'size', 'sort', 'pmin', 'pmax', 'photoOnly', 'newOnly']
+  ['q', 'cityFilter', 'cat', 'brand', 'size', 'sort', 'pmin', 'pmax', 'photoOnly', 'newOnly', 'goodOnly']
     .forEach(function (id) {
-      $(id).addEventListener('input', slow.indexOf(id) >= 0 ? applySoon : apply);
+      $(id).addEventListener('input', slow.indexOf(id) >= 0 ? applySoon : function () { apply(); });
     });
 
-  $('filtersBtn').addEventListener('click', function () {
-    $('filters').classList.add('open');
-  });
-  $('filtersClose').addEventListener('click', function () {
-    $('filters').classList.remove('open');
-  });
+  $('filtersBtn').addEventListener('click', openFilters);
+  $('filtersClose').addEventListener('click', closeFilters);
+  $('resetBtn').addEventListener('click', resetFilters);
+  $('more').addEventListener('click', renderChunk);
 
   Array.prototype.forEach.call(document.querySelectorAll('#typeChips .chip'), function (ch) {
     ch.addEventListener('click', function () {
-      Array.prototype.forEach.call(document.querySelectorAll('#typeChips .chip'), function (c) { c.classList.remove('on'); });
-      ch.classList.add('on');
-      stateType = ch.dataset.type;
+      setStateType(ch.dataset.type);
       apply();
     });
   });
 
+  $('modalClose').addEventListener('click', closeModal);
+  $('modal').addEventListener('click', function (e) {
+    if (e.target === $('modal')) closeModal();
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!$('filters').classList.contains('open')) return;
+    if ($('filters').contains(e.target) || $('filtersBtn').contains(e.target)) return;
+    closeFilters();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (!$('modal').hidden) closeModal();
+    else closeFilters();
+  });
+
   apply();
+
+  // выбранные раньше категорию/бренд/размер/город можно восстановить
+  // только после того, как появились варианты в списках
+  if (pendingSelects) {
+    var changed = false;
+    ['cat', 'brand', 'size', 'cityFilter'].forEach(function (id) {
+      var v = pendingSelects[id];
+      if (!v) return;
+      var has = Array.prototype.some.call($(id).options, function (o) { return o.value === v; });
+      if (has) { $(id).value = v; changed = true; }
+    });
+    pendingSelects = null;
+    if (changed) apply();
+  }
 }
 
 /* ---------- автообновление: подхватываем новый каталог без перезагрузки ---------- */
@@ -605,7 +881,7 @@ function pullFresh() {
       DATA = fresh;
       rescore();
       updateHeader();
-      apply(); // фильтры пересоберутся, пропавшие значения сбросятся в «Все ...»
+      apply(true); // фильтры пересоберутся, пропавшие значения сбросятся в «Все ...», порция карточек сохранится
     })
     .catch(function () { })
     .then(function () { pulling = false; });
