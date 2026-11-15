@@ -534,7 +534,7 @@ function apply() {
     '<span class="pill"><b>' + list.length + '</b> найдено</span>' +
     '<span class="pill pill-good"><b>' + good + '</b> выгодных</span>' +
     (goodFake ? '<span class="pill pill-good">из них паль <b>' + goodFake + '</b></span>' : '') +
-    (noBrand ? '<span class="pill">без бренда <b>' + noBrand + '</b></span>' : '') +
+    (noBrand && stateType !== 'nobrand' ? '<span class="pill">без бренда <b>' + noBrand + '</b></span>' : '') +
     '<span class="pill">медиана <b>' + fmt(Math.round(MODEL ? MODEL.allMedian : 0)) + '</b></span>' +
     (aiChecked ? '<span class="pill pill-ai">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
   $('empty').hidden = list.length > 0;
