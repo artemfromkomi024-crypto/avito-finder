@@ -186,6 +186,7 @@
     <div class="chip" data-type="orig">Оригинал</div>
     <div class="chip" data-type="doubt">Спорные</div>
     <div class="chip" data-type="fake">Паль</div>
+    <div class="chip" data-type="nobrand">Без бренда</div>
   </div>
 
 
@@ -311,6 +312,8 @@ function estimate(item, model, isFake) {
 }
 
 function authLabelOf(item, auth) {
+  // у вещи без бренда подделывать нечего — ИИ её тоже не должен записывать в паль
+  if (!item.brand || item.brand === NO_BRAND) return NO_BRAND;
   if (item.ai) {
     if (item.ai.verdict === 'original') return 'оригинал';
     if (item.ai.verdict === 'fake') return 'паль';
@@ -360,30 +363,35 @@ function cardOf(item, est, auth) {
   var meta = document.createElement('div');
   meta.className = 'meta';
   var ai = item.ai;
-  var label, labelCls, labelTip;
-  if (ai) {
+  var lbl = authLabelOf(item, auth);
+  var label = '', labelCls = '', labelTip = '';
+
+  if (lbl === NO_BRAND) {
+    labelTip = 'бренд не указан в объявлении';
+  } else if (ai) {
     var conf = Math.round((ai.confidence || 0) * 100);
     if (ai.verdict === 'original') { label = 'ИИ: оригинал ' + conf + '%'; labelCls = ' orig'; }
     else if (ai.verdict === 'fake') { label = 'ИИ: паль ' + conf + '%'; labelCls = ' fake'; }
     else { label = 'ИИ не распознал'; labelCls = ' doubt'; }
     labelTip = (ai.reasons || []).join('; ');
   } else {
-    label = auth.label === 'паль'
+    label = lbl === 'паль'
       ? 'паль ' + Math.round(auth.score * 100) + '%'
-      : auth.label === 'оригинал'
+      : lbl === 'оригинал'
         ? 'оригинал ' + Math.round((1 - auth.score) * 100) + '%'
         : 'спорно';
-    labelCls = auth.label === 'паль' ? ' fake' : auth.label === 'оригинал' ? ' orig' : ' doubt';
+    labelCls = lbl === 'паль' ? ' fake' : lbl === 'оригинал' ? ' orig' : ' doubt';
     labelTip = (auth.reasons || []).join('; ');
   }
 
   var tags = [
-    { text: item.brand, cls: '' },
+    { text: item.brand, cls: '', tip: lbl === NO_BRAND ? labelTip : '' },
     { text: item.size, cls: '' },
     { text: item.condition === 'new' ? 'новое' : '', cls: '' },
-    { text: item.city, cls: '' },
-    { text: label, cls: labelCls, tip: labelTip }
+    { text: item.city, cls: '' }
   ];
+  // у вещей без бренда метка уже видна в поле бренда — второй раз не пишем
+  if (lbl !== NO_BRAND) tags.push({ text: label, cls: labelCls, tip: labelTip });
 
   tags.forEach(function (t) {
     if (!t.text) return;
@@ -444,6 +452,7 @@ function matches(it, auth, f, skip) {
   if (stateType === 'fake' && lbl !== 'паль') return false;
   if (stateType === 'orig' && lbl !== 'оригинал') return false;
   if (stateType === 'doubt' && lbl !== 'спорно') return false;
+  if (stateType === 'nobrand' && lbl !== NO_BRAND) return false;
   return true;
 }
 
@@ -489,6 +498,10 @@ function syncFilters() {
 }
 
 function rescore() {
+  // бренд не указан — пишем это словами, а не «NoName»
+  DATA.items.forEach(function (it) {
+    if (!it.brand || it.brand === 'NoName') it.brand = NO_BRAND;
+  });
   MODEL = buildModel(DATA.items);
   SCORED = DATA.items.map(function (it) {
     var auth = fakeScore(it, MODEL);
@@ -516,10 +529,12 @@ function apply() {
     return Math.round(x.est.discount * 100) >= 35 && authLabelOf(x.item, x.auth) === 'паль';
   }).length;
   var aiChecked = list.filter(function (x) { return x.item.ai; }).length;
+  var noBrand = list.filter(function (x) { return authLabelOf(x.item, x.auth) === NO_BRAND; }).length;
   $('stats').innerHTML =
     '<span class="pill"><b>' + list.length + '</b> найдено</span>' +
     '<span class="pill pill-good"><b>' + good + '</b> выгодных</span>' +
     (goodFake ? '<span class="pill pill-good">из них паль <b>' + goodFake + '</b></span>' : '') +
+    (noBrand ? '<span class="pill">без бренда <b>' + noBrand + '</b></span>' : '') +
     '<span class="pill">медиана <b>' + fmt(Math.round(MODEL ? MODEL.allMedian : 0)) + '</b></span>' +
     (aiChecked ? '<span class="pill pill-ai">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
   $('empty').hidden = list.length > 0;
