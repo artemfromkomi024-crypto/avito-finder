@@ -34,14 +34,17 @@ def main():
             changed_urls += 1
         it["url"] = clean
         it["id"] = item_id(clean)
-        cur = merged.get(clean)
+        # ключ — номер объявления, а не ссылка: одно объявление бывает с разными
+        # «хвостами» адреса (разный заголовок в ссылке), и это всё равно один товар
+        key = it["id"]
+        cur = merged.get(key)
         if cur is None or score(it) > score(cur):
             if cur is not None:
                 # переносим полезное из отброшенной записи
                 for k, v in cur.items():
                     if v and not it.get(k):
                         it[k] = v
-            merged[clean] = it
+            merged[key] = it
         else:
             for k, v in it.items():
                 if v and not cur.get(k):
