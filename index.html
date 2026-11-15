@@ -401,6 +401,7 @@ function cardOf(item, est, auth) {
     im.loading = 'lazy';       // фото грузятся по мере прокрутки, а не все 400 сразу
     im.decoding = 'async';
     im.alt = '';
+    im.onerror = function () { im.remove(); thumb.textContent = 'фото не загрузилось'; };
     im.src = item.img;
     thumb.appendChild(im);
   } else {
@@ -683,9 +684,9 @@ function apply(keepShown) {
   currentList = list;
   shown = 0;
   $('grid').textContent = '';
-  var target = Math.min(prevShown, list.length);
+  var target = keepShown ? Math.min(prevShown, list.length) : Math.min(PAGE, list.length);
+  if (!target) target = Math.min(PAGE, list.length); // после обновления всегда показываем хотя бы первую порцию
   while (shown < target) renderChunk();
-  renderChunk();
 
   var good = list.filter(function (x) { return Math.round(x.est.discount * 100) >= 35; }).length;
   var goodFake = list.filter(function (x) {
