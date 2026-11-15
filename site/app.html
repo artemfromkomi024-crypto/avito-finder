@@ -106,6 +106,19 @@
     padding:3px 8px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   }
   .badge.good{color:var(--accent)} .badge.mid{color:var(--warn)} .badge.bad{color:var(--bad)}
+  .thumb .fresh{
+    position:absolute;left:8px;bottom:8px;z-index:2;font-size:10.5px;font-weight:650;
+    color:#86efac;background:rgba(8,10,16,.82);border:1px solid rgba(74,222,128,.35);
+    border-radius:999px;padding:3px 8px;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  }
+  .card.dim{opacity:.5}
+  .card.dim:hover,.card.dim:focus-within{opacity:.95}
+  .thumb .was{
+    position:absolute;right:8px;bottom:8px;z-index:2;font-size:10px;color:#cbd5e1;
+    background:rgba(8,10,16,.78);border:1px solid var(--line2);border-radius:999px;padding:2px 7px;
+  }
+  .chip .n{opacity:.55;font-weight:400}
   .body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:7px;flex:1}
   .title{
     font-size:13px;line-height:1.32;font-weight:500;
@@ -162,7 +175,8 @@
   .est{font-size:11px;color:var(--muted);line-height:1.55}
   a{color:inherit;text-decoration:none}
   .empty{color:var(--muted);text-align:center;padding:48px 12px;font-size:14px}
-  footer{
+  .empty .reset{display:inline-block;margin-top:14px}
+  .pill-fresh{border-color:rgba(74,222,128,.3)}  footer{
     position:fixed;bottom:0;left:0;right:0;z-index:15;text-align:center;
     padding:9px 14px;font-size:10px;letter-spacing:.12em;color:var(--muted);
     background:rgba(10,12,19,.86);border-top:1px solid var(--line);
@@ -201,6 +215,10 @@
     .grid{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:11px}
     .body{padding:9px 10px 11px}
     .price{font-size:16px}
+    /* на телефоне оставляем только главные цифры, чтобы шапка не занимала пол-экрана */
+    #stats{gap:5px;margin-top:9px}
+    .pill{font-size:10.5px;padding:3px 7px}
+    .pill-hide-sm{display:none}
   }
 </style>
 </head>
@@ -221,6 +239,7 @@
     <select id="size"><option value="">Все размеры</option></select>
     <select id="sort">
       <option value="discount">Сначала выгодные</option>
+      <option value="fresh">Сначала свежие</option>
       <option value="price">Сначала дешёвые</option>
       <option value="profit">Сначала прибыльные</option>
     </select>
@@ -229,18 +248,21 @@
   </div>
 
   <div class="chips" id="typeChips" role="group" aria-label="Подлинность">
-    <button type="button" class="chip on" data-type="all" aria-pressed="true">Все</button>
-    <button type="button" class="chip" data-type="orig" aria-pressed="false">Оригинал</button>
-    <button type="button" class="chip" data-type="doubt" aria-pressed="false">Спорные</button>
-    <button type="button" class="chip" data-type="fake" aria-pressed="false">Паль</button>
-    <button type="button" class="chip" data-type="nobrand" aria-pressed="false">Без бренда</button>
+    <button type="button" class="chip on" data-type="all" data-label="Все" aria-pressed="true">Все</button>
+    <button type="button" class="chip" data-type="orig" data-label="Оригинал" aria-pressed="false">Оригинал</button>
+    <button type="button" class="chip" data-type="doubt" data-label="Спорные" aria-pressed="false">Спорные</button>
+    <button type="button" class="chip" data-type="fake" data-label="Паль" aria-pressed="false">Паль</button>
+    <button type="button" class="chip" data-type="nobrand" data-label="Без бренда" aria-pressed="false">Без бренда</button>
   </div>
 
 
   <div class="row">
-    <label class="toggle"><input type="checkbox" id="photoOnly" checked> только с фото</label>
-    <label class="toggle"><input type="checkbox" id="newOnly"> только новое</label>
-    <label class="toggle"><input type="checkbox" id="goodOnly"> только выгодные</label>
+    <label class="toggle" title="только объявления с фотографией"><input type="checkbox" id="photoOnly" checked> только с фото</label>
+    <label class="toggle" title="только новые вещи, не б/у"><input type="checkbox" id="newOnly"> не б/у</label>
+    <label class="toggle" title="скидка к рынку от 35%"><input type="checkbox" id="goodOnly"> выгодные</label>
+    <label class="toggle" title="выставлено сегодня по Москве"><input type="checkbox" id="freshOnly"> сегодня</label>
+    <label class="toggle" title="скрыть объявления, похожие на подделку"><input type="checkbox" id="hideFake"> без пали</label>
+    <label class="toggle" title="скрыть то, что вы уже открывали"><input type="checkbox" id="hideSeen"> без открытых</label>
     <button type="button" class="reset" id="resetBtn" hidden>сбросить</button>
   </div>
   <div class="sig">Afanasov INC.</div>
@@ -252,7 +274,10 @@
 <main>
   <div class="grid" id="grid"></div>
   <button type="button" class="more" id="more" hidden></button>
-  <div class="empty" id="empty" hidden>Ничего не найдено — ослабь фильтры</div>
+  <div class="empty" id="empty" hidden>
+    <div>Ничего не найдено — ослабь фильтры</div>
+    <button type="button" class="reset" id="emptyReset">Сбросить фильтры</button>
+  </div>
 </main>
 
 <div class="modal" id="modal" hidden>
@@ -292,7 +317,6 @@ function buildModel(items) {
   }
   items.forEach(function (it) {
     var branded = it.brand && it.brand !== NO_BRAND;
-    add(byCat, it.category, it.price);
     add(byCat, it.category, it.price);
     if (branded) {
       add(byKey, it.category + '|' + it.brand, it.price);
@@ -385,6 +409,66 @@ function authLabelOf(item, auth) {
 
 function fmt(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
 
+// метка «открыто» на фото
+function addWas(thumb) {
+  if (thumb.querySelector('.was')) return;
+  var was = document.createElement('div');
+  was.className = 'was';
+  was.textContent = 'открыто';
+  thumb.appendChild(was);
+}
+
+// сегодняшняя дата по Москве в виде 2026-11-15 — с ней сравниваем поле date
+function mskDate(d) {
+  try {
+    return new Date(d).toLocaleDateString('en-CA', { timeZone: 'Europe/Moscow' });
+  } catch (e) {
+    return new Date(d).toISOString().slice(0, 10);
+  }
+}
+var TODAY = mskDate(Date.now());
+
+// поле date в базе бывает и датой, и словами («Вчера», «7 дней назад»).
+// Приводим к виду 2026-11-15, чтобы можно было честно сравнивать и сортировать.
+function parseItemDate(s) {
+  if (!s) return '';
+  s = String(s).trim();
+  var m = /^(\d{4}-\d{2}-\d{2})/.exec(s);
+  if (m) return m[1];
+  var low = s.toLowerCase();
+  if (low.indexOf('сегодня') >= 0 || low.indexOf('час') >= 0 || low.indexOf('минут') >= 0) return TODAY;
+  if (low.indexOf('вчера') >= 0) return mskDate(Date.now() - 86400000);
+  var n = low.match(/(\d+)\s*(дн|день|дня|сут)/);
+  if (low.indexOf('недел') >= 0) {
+    var w = low.match(/(\d+)/);
+    return mskDate(Date.now() - (w ? +w[1] : 1) * 7 * 86400000);
+  }
+  if (low.indexOf('месяц') >= 0) return mskDate(Date.now() - 30 * 86400000);
+  if (n) return mskDate(Date.now() - +n[1] * 86400000);
+  return '';
+}
+
+/* ---------- что уже открывали: чтобы не просматривать одно и то же ---------- */
+
+var SEEN_KEY = 'avito.seen.v1';
+var SEEN = new Set();
+
+function loadSeen() {
+  try {
+    (JSON.parse(localStorage.getItem(SEEN_KEY) || '[]') || []).forEach(function (id) { SEEN.add(id); });
+  } catch (e) { }
+}
+
+function markSeen(id) {
+  if (!id || SEEN.has(id)) return;
+  SEEN.add(id);
+  try {
+    var arr = Array.from(SEEN);
+    if (arr.length > 2000) arr = arr.slice(-2000); // не раздуваем память браузера
+    localStorage.setItem(SEEN_KEY, JSON.stringify(arr));
+  } catch (e) { }
+}
+
 function cardOf(item, est, auth) {
   var a = document.createElement('a');
   a.href = item.url || '#';
@@ -413,6 +497,25 @@ function cardOf(item, est, auth) {
   badge.className = 'badge ' + (d >= 35 ? 'good' : d >= 20 ? 'mid' : 'bad');
   badge.textContent = (d >= 0 ? '−' : '+') + Math.abs(d) + '% к рынку';
   thumb.appendChild(badge);
+
+  if (item._d === TODAY) {
+    var fresh = document.createElement('div');
+    fresh.className = 'fresh';
+    fresh.textContent = 'сегодня';
+    fresh.title = 'объявление выставлено сегодня';
+    thumb.appendChild(fresh);
+  }
+
+  if (SEEN.has(item.id)) {
+    card.classList.add('dim');
+    addWas(thumb);
+  }
+  // помним, что вещь открывали: её можно спрятать фильтром «без открытых»
+  a.addEventListener('click', function () {
+    markSeen(item.id);
+    card.classList.add('dim');
+    addWas(thumb);
+  });
 
   var body = document.createElement('div');
   body.className = 'body';
@@ -511,13 +614,17 @@ function readFilters() {
     pmax: +$('pmax').value || Infinity,
     photoOnly: $('photoOnly').checked,
     newOnly: $('newOnly').checked,
-    goodOnly: $('goodOnly').checked
+    goodOnly: $('goodOnly').checked,
+    freshOnly: $('freshOnly').checked,
+    hideFake: $('hideFake').checked,
+    hideSeen: $('hideSeen').checked
   };
 }
 
 // x — объявление вместе с оценкой: { item, auth, est }
 // skip — измерение, которое сейчас не учитываем (чтобы выбрать другой вариант в нём же)
-function matches(x, f, skip) {
+// ignoreType — не учитывать чип подлинности (для счётчиков на чипах)
+function matches(x, f, skip, ignoreType) {
   var it = x.item;
   if (skip !== 'q' && f.q && (it.title + ' ' + it.brand + ' ' + it.category).toLowerCase().indexOf(f.q) < 0) return false;
   if (skip !== 'city' && f.city && it.city !== f.city) return false;
@@ -527,8 +634,13 @@ function matches(x, f, skip) {
   if (it.price < f.pmin || it.price > f.pmax) return false;
   if (f.photoOnly && !it.img) return false;
   if (f.newOnly && it.condition !== 'new') return false;
+  if (f.freshOnly && it.date !== TODAY) return false;
   if (f.goodOnly && Math.round(x.est.discount * 100) < 35) return false;
+  if (f.hideSeen && SEEN.has(it.id)) return false;
   var lbl = authLabelOf(it, x.auth);
+  // «без пали» не должно обнулять список, когда человек сам выбрал чип «Паль»
+  if (f.hideFake && lbl === 'паль') return false;
+  if (ignoreType) return true;
   if (stateType === 'fake' && lbl !== 'паль') return false;
   if (stateType === 'orig' && lbl !== 'оригинал') return false;
   if (stateType === 'doubt' && lbl !== 'спорно') return false;
@@ -581,6 +693,7 @@ function rescore() {
   // бренд не указан — пишем это словами, а не «NoName»
   DATA.items.forEach(function (it) {
     if (!it.brand || it.brand === 'NoName') it.brand = NO_BRAND;
+    it._d = parseItemDate(it.date); // дата в одном формате: для «сегодня» и сортировки
   });
   MODEL = buildModel(DATA.items);
   SCORED = DATA.items.map(function (it) {
@@ -619,6 +732,9 @@ function saveFilters() {
     o.photoOnly = $('photoOnly').checked;
     o.newOnly = $('newOnly').checked;
     o.goodOnly = $('goodOnly').checked;
+    o.freshOnly = $('freshOnly').checked;
+    o.hideFake = $('hideFake').checked;
+    o.hideSeen = $('hideSeen').checked;
     o.type = stateType;
     localStorage.setItem(FILTERS_KEY, JSON.stringify(o));
   } catch (e) { }
@@ -636,6 +752,9 @@ function loadFilters() {
     if (typeof o.photoOnly === 'boolean') $('photoOnly').checked = o.photoOnly;
     if (typeof o.newOnly === 'boolean') $('newOnly').checked = o.newOnly;
     if (typeof o.goodOnly === 'boolean') $('goodOnly').checked = o.goodOnly;
+    if (typeof o.freshOnly === 'boolean') $('freshOnly').checked = o.freshOnly;
+    if (typeof o.hideFake === 'boolean') $('hideFake').checked = o.hideFake;
+    if (typeof o.hideSeen === 'boolean') $('hideSeen').checked = o.hideSeen;
     if (o.type) setStateType(o.type);
     pendingSelects = { cat: o.cat, brand: o.brand, size: o.size, cityFilter: o.cityFilter };
   } catch (e) { }
@@ -653,7 +772,8 @@ function setStateType(t) {
 function isDirty() {
   return !!($('q').value.trim() || $('cityFilter').value || $('cat').value || $('brand').value || $('size').value ||
     $('sort').value !== 'discount' || $('pmin').value !== '1000' || $('pmax').value !== '20000' ||
-    !$('photoOnly').checked || $('newOnly').checked || $('goodOnly').checked || stateType !== 'all');
+    !$('photoOnly').checked || $('newOnly').checked || $('goodOnly').checked ||
+    $('freshOnly').checked || $('hideFake').checked || $('hideSeen').checked || stateType !== 'all');
 }
 
 function resetFilters() {
@@ -665,6 +785,9 @@ function resetFilters() {
   $('photoOnly').checked = true;
   $('newOnly').checked = false;
   $('goodOnly').checked = false;
+  $('freshOnly').checked = false;
+  $('hideFake').checked = false;
+  $('hideSeen').checked = false;
   setStateType('all');
   apply();
 }
@@ -672,12 +795,23 @@ function resetFilters() {
 function apply(keepShown) {
   var prevShown = keepShown ? shown : 0;
   var f = syncFilters();
-  var list = SCORED.filter(function (x) { return matches(x, f); });
+  // сначала все, кто прошёл фильтры кроме чипа подлинности — по ним считаем цифры на чипах
+  var base = SCORED.filter(function (x) { return matches(x, f, null, true); });
+  var counts = { all: base.length, orig: 0, doubt: 0, fake: 0, nobrand: 0 };
+  var list = [];
+  base.forEach(function (x) {
+    var lbl = authLabelOf(x.item, x.auth);
+    var key = lbl === NO_BRAND ? 'nobrand' : lbl === 'паль' ? 'fake' : lbl === 'оригинал' ? 'orig' : 'doubt';
+    counts[key]++;
+    if (stateType === 'all' || stateType === key) list.push(x);
+  });
+  setChipCounts(counts);
 
   var sort = $('sort').value;
   list.sort(function (a, b) {
     if (sort === 'price') return a.item.price - b.item.price;
     if (sort === 'profit') return b.est.profit - a.est.profit;
+    if (sort === 'fresh') return String(b.item._d || '').localeCompare(String(a.item._d || '')) || b.est.discount - a.est.discount;
     return b.est.discount - a.est.discount;
   });
 
@@ -693,17 +827,30 @@ function apply(keepShown) {
     return Math.round(x.est.discount * 100) >= 35 && authLabelOf(x.item, x.auth) === 'паль';
   }).length;
   var aiChecked = list.filter(function (x) { return x.item.ai; }).length;
-  var noBrand = list.filter(function (x) { return authLabelOf(x.item, x.auth) === NO_BRAND; }).length;
+  var noBrand = counts.nobrand;
+  var fresh = list.filter(function (x) { return x.item._d === TODAY; }).length;
   $('stats').innerHTML =
     '<span class="pill"><b>' + list.length + '</b> найдено</span>' +
     '<span class="pill pill-good"><b>' + good + '</b> выгодных</span>' +
-    (goodFake ? '<span class="pill pill-good">из них паль <b>' + goodFake + '</b></span>' : '') +
+    (fresh ? '<span class="pill pill-fresh">сегодня <b>' + fresh + '</b></span>' : '') +
+    (goodFake && stateType !== 'fake' ? '<span class="pill pill-good">из них паль <b>' + goodFake + '</b></span>' : '') +
     (noBrand && stateType !== 'nobrand' ? '<span class="pill">без бренда <b>' + noBrand + '</b></span>' : '') +
-    '<span class="pill">медиана <b>' + fmt(Math.round(MODEL ? MODEL.allMedian : 0)) + '</b></span>' +
-    (aiChecked ? '<span class="pill pill-ai">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
+    '<span class="pill pill-hide-sm" title="медиана цен всех объявлений каталога — общий ориентир, а не оценка этой вещи">' +
+    'медиана каталога <b>' + fmt(Math.round(MODEL ? MODEL.allMedian : 0)) + '</b></span>' +
+    (aiChecked ? '<span class="pill pill-ai pill-hide-sm">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
   $('empty').hidden = list.length > 0;
   $('resetBtn').hidden = !isDirty();
   saveFilters();
+}
+
+// цифры на чипах: «Паль · 3», «Без бренда · 76»
+function setChipCounts(counts) {
+  Array.prototype.forEach.call(document.querySelectorAll('#typeChips .chip'), function (c) {
+    var t = c.dataset.type;
+    var label = c.dataset.label || '';
+    var n = counts[t] || 0;
+    c.innerHTML = label + ' <span class="n">· ' + n + '</span>';
+  });
 }
 
 // перерисовка по вводу с задержкой: иначе на каждую букву заново строятся все карточки
@@ -791,15 +938,22 @@ function openAuth(item, auth) {
   body.appendChild(note);
 
   $('modal').hidden = false;
+  $('modalClose').focus();
 }
 
 function closeModal() {
+  if ($('modal').hidden) return;
   $('modal').hidden = true;
 }
 
 function openFilters() {
   $('filters').classList.add('open');
   if (window.matchMedia('(max-width:700px)').matches) document.body.classList.add('locked');
+}
+
+// на телефоне поиск живёт в шторке — перед фокусом её надо открыть
+function openFiltersIfNeeded() {
+  if (window.matchMedia('(max-width:700px)').matches && !$('filters').classList.contains('open')) openFilters();
 }
 
 function closeFilters() {
@@ -810,10 +964,12 @@ function closeFilters() {
 function init() {
   updateHeader();
   rescore();
+  loadSeen();
   loadFilters();
 
   var slow = ['q', 'pmin', 'pmax']; // ввод текста и цифр — с задержкой
-  ['q', 'cityFilter', 'cat', 'brand', 'size', 'sort', 'pmin', 'pmax', 'photoOnly', 'newOnly', 'goodOnly']
+  ['q', 'cityFilter', 'cat', 'brand', 'size', 'sort', 'pmin', 'pmax',
+    'photoOnly', 'newOnly', 'goodOnly', 'freshOnly', 'hideFake', 'hideSeen']
     .forEach(function (id) {
       $(id).addEventListener('input', slow.indexOf(id) >= 0 ? applySoon : function () { apply(); });
     });
@@ -821,10 +977,13 @@ function init() {
   $('filtersBtn').addEventListener('click', openFilters);
   $('filtersClose').addEventListener('click', closeFilters);
   $('resetBtn').addEventListener('click', resetFilters);
+  $('emptyReset').addEventListener('click', resetFilters);
   $('more').addEventListener('click', renderChunk);
 
   Array.prototype.forEach.call(document.querySelectorAll('#typeChips .chip'), function (ch) {
     ch.addEventListener('click', function () {
+      // выбрал «Паль» — значит хочет их видеть: снимаем «без пали»
+      if (ch.dataset.type === 'fake' && $('hideFake').checked) $('hideFake').checked = false;
       setStateType(ch.dataset.type);
       apply();
     });
@@ -842,9 +1001,26 @@ function init() {
   });
 
   document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) {
+      e.preventDefault();
+      openFiltersIfNeeded();
+      $('q').focus();
+      return;
+    }
     if (e.key !== 'Escape') return;
-    if (!$('modal').hidden) closeModal();
-    else closeFilters();
+    if (!$('modal').hidden) { closeModal(); return; }
+    if ($('filters').classList.contains('open')) { closeFilters(); return; }
+    if (document.activeElement === $('q') && $('q').value) { $('q').value = ''; apply(); }
+  });
+
+  // в окне вердикта Tab не должен уводить фокус на страницу под ним
+  $('modal').addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    var f = $('modal').querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   });
 
   apply();
