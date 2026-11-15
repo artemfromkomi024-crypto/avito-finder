@@ -186,6 +186,7 @@
     <div class="chip" data-type="orig">Оригинал</div>
     <div class="chip" data-type="doubt">Спорные</div>
     <div class="chip" data-type="fake">Паль</div>
+    <div class="chip" data-type="nobrand">Без бренда</div>
   </div>
 
 
@@ -213,6 +214,7 @@ let stateType = 'all';
 let MODEL = null;      // медианы по категориям и брендам
 let SCORED = [];       // объявления с готовой оценкой подлинности и выгодности
 var GOOD_DISCOUNT = 0.35; // скидка, с которой вещь считаем выгодной
+var NO_BRAND = 'без бренда'; // так помечаем одежду, у которой бренд не указан
 
 function median(arr) {
   if (!arr.length) return 0;
@@ -228,7 +230,8 @@ function buildModel(items) {
     map.get(key).push(price);
   }
   items.forEach(function (it) {
-    var branded = it.brand && it.brand !== 'NoName';
+    var branded = it.brand && it.brand !== NO_BRAND;
+    add(byCat, it.category, it.price);
     add(byCat, it.category, it.price);
     if (branded) {
       add(byKey, it.category + '|' + it.brand, it.price);
@@ -241,45 +244,48 @@ function buildModel(items) {
 }
 
 /* оценка подлинности: 0 = явный оригинал, 1 = явное паль */
-var FAKE_WORDS = ['паль', 'реплика', 'копія', 'копия', '1:1', 'аналог', 'репл', 'люкс качество', 'качество люкс', 'идентичен'];
-var ORIG_WORDS = ['оригинал', 'ориг', 'с биркой', 'бирка', 'привез', 'европ', 'сша', 'сток', 'бутик'];
+var FAKE_WORDS = ['паль', 'реплик', 'копи', '1:1', 'аналог', 'люкс качество', 'качество люкс', 'идентичн'];
+var ORIG_WORDS = ['оригинал', 'с биркой', 'бирка', 'бирки', 'привез', 'европ', 'сша', 'сток', 'бутик'];
 
 function fakeScore(item, model) {
+  // без бренда не бывает «паль»: нечего подделывать. Это отдельная метка, а не приговор
+  if (!item.brand || item.brand === NO_BRAND) {
+    return { score: 0, label: NO_BRAND, reasons: ['бренд не указан'] };
+  }
+
   var t = (item.title + ' ' + (item.description || '')).toLowerCase();
-  var s = (item.brand && item.brand !== 'NoName') ? 0.32 : 0.68; // базовая неопределённость
+  var s = 0.40; // брендовая вещь по умолчанию «под вопросом», а не паль
   var reasons = [];
 
   FAKE_WORDS.forEach(function (w) {
-    if (t.indexOf(w) >= 0) { s += 0.35; reasons.push('в тексте «' + w + '»'); }
+    if (t.indexOf(w) >= 0) { s += 0.30; reasons.push('в тексте «' + w + '»'); }
   });
   ORIG_WORDS.forEach(function (w) {
     if (t.indexOf(w) >= 0) { s -= 0.22; reasons.push('в тексте «' + w + '»'); }
   });
 
-  if (!item.brand || item.brand === 'NoName') { reasons.push('бренд не указан'); }
-
   var group = model.byBrand.get(item.brand) || [];
   if (group.length >= 3) {
     var med = median(group);
-    if (item.price < med * 0.45) { s += 0.25; reasons.push('цена ниже 45% медианы бренда'); }
-    else if (item.price > med * 1.6) { s -= 0.1; reasons.push('цена выше рынка'); }
+    if (item.price < med * 0.40) { s += 0.25; reasons.push('цена ниже 40% медианы бренда'); }
+    else if (item.price > med * 1.6) { s -= 0.10; reasons.push('цена выше рынка'); }
   }
 
   if (item.sellerRating) {
-    if (item.sellerRating < 4.5) { s += 0.12; reasons.push('рейтинг продавца ' + item.sellerRating); }
-    else if (item.sellerRating >= 4.9) { s -= 0.08; reasons.push('высокий рейтинг продавца'); }
+    if (item.sellerRating < 4.5) { s += 0.10; reasons.push('рейтинг продавца ' + item.sellerRating); }
+    else if (item.sellerRating >= 4.9) { s -= 0.10; reasons.push('высокий рейтинг продавца'); }
   }
 
-  if (!item.img) { s += 0.1; reasons.push('нет фото'); }
+  if (!item.img) { s += 0.05; reasons.push('нет фото'); }
   if (item.size) { s -= 0.03; }
 
   s = Math.max(0, Math.min(1, s));
-  var label = s >= 0.65 ? 'паль' : s <= 0.35 ? 'оригинал' : 'спорно';
+  var label = s >= 0.62 ? 'паль' : s <= 0.30 ? 'оригинал' : 'спорно';
   return { score: s, label: label, reasons: reasons };
 }
 
 function estimate(item, model, isFake) {
-  var branded = item.brand && item.brand !== 'NoName';
+  var branded = item.brand && item.brand !== NO_BRAND;
   var market = 0, basis = 'по всему рынку';
 
   function pick(list, why) {
@@ -306,6 +312,8 @@ function estimate(item, model, isFake) {
 }
 
 function authLabelOf(item, auth) {
+  // у вещи без бренда подделывать нечего — ИИ её тоже не должен записывать в паль
+  if (!item.brand || item.brand === NO_BRAND) return NO_BRAND;
   if (item.ai) {
     if (item.ai.verdict === 'original') return 'оригинал';
     if (item.ai.verdict === 'fake') return 'паль';
@@ -355,30 +363,35 @@ function cardOf(item, est, auth) {
   var meta = document.createElement('div');
   meta.className = 'meta';
   var ai = item.ai;
-  var label, labelCls, labelTip;
-  if (ai) {
+  var lbl = authLabelOf(item, auth);
+  var label = '', labelCls = '', labelTip = '';
+
+  if (lbl === NO_BRAND) {
+    labelTip = 'бренд не указан в объявлении';
+  } else if (ai) {
     var conf = Math.round((ai.confidence || 0) * 100);
     if (ai.verdict === 'original') { label = 'ИИ: оригинал ' + conf + '%'; labelCls = ' orig'; }
     else if (ai.verdict === 'fake') { label = 'ИИ: паль ' + conf + '%'; labelCls = ' fake'; }
     else { label = 'ИИ не распознал'; labelCls = ' doubt'; }
     labelTip = (ai.reasons || []).join('; ');
   } else {
-    label = auth.label === 'паль'
+    label = lbl === 'паль'
       ? 'паль ' + Math.round(auth.score * 100) + '%'
-      : auth.label === 'оригинал'
+      : lbl === 'оригинал'
         ? 'оригинал ' + Math.round((1 - auth.score) * 100) + '%'
         : 'спорно';
-    labelCls = auth.label === 'паль' ? ' fake' : auth.label === 'оригинал' ? ' orig' : ' doubt';
+    labelCls = lbl === 'паль' ? ' fake' : lbl === 'оригинал' ? ' orig' : ' doubt';
     labelTip = (auth.reasons || []).join('; ');
   }
 
   var tags = [
-    { text: item.brand, cls: '' },
+    { text: item.brand, cls: '', tip: lbl === NO_BRAND ? labelTip : '' },
     { text: item.size, cls: '' },
     { text: item.condition === 'new' ? 'новое' : '', cls: '' },
-    { text: item.city, cls: '' },
-    { text: label, cls: labelCls, tip: labelTip }
+    { text: item.city, cls: '' }
   ];
+  // у вещей без бренда метка уже видна в поле бренда — второй раз не пишем
+  if (lbl !== NO_BRAND) tags.push({ text: label, cls: labelCls, tip: labelTip });
 
   tags.forEach(function (t) {
     if (!t.text) return;
@@ -439,6 +452,7 @@ function matches(it, auth, f, skip) {
   if (stateType === 'fake' && lbl !== 'паль') return false;
   if (stateType === 'orig' && lbl !== 'оригинал') return false;
   if (stateType === 'doubt' && lbl !== 'спорно') return false;
+  if (stateType === 'nobrand' && lbl !== NO_BRAND) return false;
   return true;
 }
 
@@ -484,6 +498,10 @@ function syncFilters() {
 }
 
 function rescore() {
+  // бренд не указан — пишем это словами, а не «NoName»
+  DATA.items.forEach(function (it) {
+    if (!it.brand || it.brand === 'NoName') it.brand = NO_BRAND;
+  });
   MODEL = buildModel(DATA.items);
   SCORED = DATA.items.map(function (it) {
     var auth = fakeScore(it, MODEL);
@@ -511,10 +529,12 @@ function apply() {
     return Math.round(x.est.discount * 100) >= 35 && authLabelOf(x.item, x.auth) === 'паль';
   }).length;
   var aiChecked = list.filter(function (x) { return x.item.ai; }).length;
+  var noBrand = list.filter(function (x) { return authLabelOf(x.item, x.auth) === NO_BRAND; }).length;
   $('stats').innerHTML =
     '<span class="pill"><b>' + list.length + '</b> найдено</span>' +
     '<span class="pill pill-good"><b>' + good + '</b> выгодных</span>' +
     (goodFake ? '<span class="pill pill-good">из них паль <b>' + goodFake + '</b></span>' : '') +
+    (noBrand ? '<span class="pill">без бренда <b>' + noBrand + '</b></span>' : '') +
     '<span class="pill">медиана <b>' + fmt(Math.round(MODEL ? MODEL.allMedian : 0)) + '</b></span>' +
     (aiChecked ? '<span class="pill pill-ai">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
   $('empty').hidden = list.length > 0;
