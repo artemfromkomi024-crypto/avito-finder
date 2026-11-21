@@ -170,13 +170,6 @@
   .modal-body ul{margin:6px 0 0;padding-left:18px}
   .modal-body li{margin:4px 0}
   .modal-body .note{color:var(--muted);font-size:11.5px;margin-top:12px;line-height:1.5}
-  .modal-link{
-    display:inline-block;margin-top:14px;padding:9px 13px;border-radius:11px;font-size:13px;font-weight:600;
-    color:var(--accent);background:var(--accent-dim);border:1px solid rgba(74,222,128,.4);
-    transition:filter .15s ease;
-  }
-  .modal-link:hover{filter:brightness(1.15)}
-  #updated.stale{color:var(--warn)}
   body.locked{overflow:hidden}
   .price{font-size:17px;font-weight:700;letter-spacing:-.2px;margin-top:auto}
   .est{font-size:11px;color:var(--muted);line-height:1.55}
@@ -197,8 +190,6 @@
     transition:border-color .15s ease;
   }
   .filter-btn:hover{border-color:var(--line2)}
-  .filter-btn.active{border-color:rgba(74,222,128,.45);color:var(--accent)}
-  .apply-btn{display:none}
   .filters{display:block}
   .filters .head{display:none}
   @media (max-width:700px){
@@ -214,17 +205,7 @@
       backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
     }
     .filters.open{transform:translateY(0)}
-    /* закрытая шторка не должна ловить фокус с клавиатуры */
-    .filters:not(.open){visibility:hidden;transition:transform .24s ease,visibility 0s .24s}
-    .filters.open{visibility:visible;transition:transform .24s ease}
     .sig{display:block;text-align:center;font-size:10px;letter-spacing:.12em;color:var(--muted);opacity:.65;margin:14px 0 2px}
-    .apply-btn{
-      display:block;position:sticky;bottom:-16px;z-index:2;width:100%;margin:12px 0 0;padding:12px;
-      font:inherit;font-size:14px;font-weight:650;color:#07130c;background:var(--accent);
-      border:0;border-radius:12px;cursor:pointer;
-      box-shadow:0 -12px 18px 10px #0d1019;
-    }
-    .apply-btn:active{filter:brightness(.94)}
     .filters .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
     .filters .head b{font-size:15px}
     .filters .head button{
@@ -239,35 +220,31 @@
     .pill{font-size:10.5px;padding:3px 7px}
     .pill-hide-sm{display:none}
   }
-  @media (prefers-reduced-motion: reduce){
-    *{transition:none!important;animation:none!important}
-    .card:hover{transform:none}
-  }
 </style>
 </head>
 <body>
 <header>
   <h1>Авито-Финдер <span class="muted" id="city"></span></h1>
   <div class="muted" id="updated"></div>
-  <button class="filter-btn" id="filtersBtn" aria-expanded="false" aria-controls="filters">Фильтры</button>
+  <button class="filter-btn" id="filtersBtn">Фильтры</button>
 
   <div class="filters" id="filters">
     <div class="head"><b>Фильтры</b><button id="filtersClose" aria-label="Закрыть">×</button></div>
 
     <div class="controls">
-    <input class="wide" id="q" type="search" placeholder="Поиск: бренд, вещь, слово" aria-label="Поиск по объявлениям">
-    <select id="cityFilter" aria-label="Город"><option value="">Все города</option></select>
-    <select id="cat" aria-label="Категория"><option value="">Все категории</option></select>
-    <select id="brand" aria-label="Бренд"><option value="">Все бренды</option></select>
-    <select id="size" aria-label="Размер"><option value="">Все размеры</option></select>
-    <select id="sort" aria-label="Сортировка">
+    <input class="wide" id="q" type="search" placeholder="Поиск: бренд, вещь, слово">
+    <select id="cityFilter"><option value="">Все города</option></select>
+    <select id="cat"><option value="">Все категории</option></select>
+    <select id="brand"><option value="">Все бренды</option></select>
+    <select id="size"><option value="">Все размеры</option></select>
+    <select id="sort">
       <option value="discount">Сначала выгодные</option>
       <option value="fresh">Сначала свежие</option>
       <option value="price">Сначала дешёвые</option>
       <option value="profit">Сначала прибыльные</option>
     </select>
-    <input id="pmin" type="number" placeholder="Цена от" value="1000" aria-label="Цена от">
-    <input id="pmax" type="number" placeholder="Цена до" value="20000" aria-label="Цена до">
+    <input id="pmin" type="number" placeholder="Цена от" value="1000">
+    <input id="pmax" type="number" placeholder="Цена до" value="20000">
   </div>
 
   <div class="chips" id="typeChips" role="group" aria-label="Подлинность">
@@ -289,10 +266,9 @@
     <button type="button" class="reset" id="resetBtn" hidden>сбросить</button>
   </div>
   <div class="sig">Afanasov INC.</div>
-  <button type="button" class="apply-btn" id="applyFiltersBtn">Показать</button>
   </div>
 
-  <div id="stats" aria-live="polite"></div>
+  <div id="stats"></div>
 </header>
 
 <main>
@@ -373,8 +349,12 @@ function fakeScore(item, model) {
     if (t.indexOf(w) >= 0) { s -= 0.22; reasons.push('в тексте «' + w + '»'); }
   });
 
-  // Цену в вердикте не учитываем вообще: на Авито вещи чаще всего б/у,
-  // и низкая цена сама по себе ничего не говорит о подлинности.
+  var group = model.byBrand.get(item.brand) || [];
+  if (group.length >= 3) {
+    var med = median(group);
+    if (item.price < med * 0.40) { s += 0.25; reasons.push('цена ниже 40% медианы бренда'); }
+    else if (item.price > med * 1.6) { s -= 0.10; reasons.push('цена выше рынка'); }
+  }
 
   if (item.sellerRating) {
     if (item.sellerRating < 4.5) { s += 0.10; reasons.push('рейтинг продавца ' + item.sellerRating); }
@@ -450,24 +430,21 @@ var TODAY = mskDate(Date.now());
 
 // поле date в базе бывает и датой, и словами («Вчера», «7 дней назад»).
 // Приводим к виду 2026-11-15, чтобы можно было честно сравнивать и сортировать.
-// Относительные даты отсчитываем от времени сбора каталога (base), а не от «сейчас»:
-// иначе «1 час назад» из старой базы через два дня превратится в «сегодня».
-function parseItemDate(s, base) {
+function parseItemDate(s) {
   if (!s) return '';
-  var now = base || Date.now();
   s = String(s).trim();
   var m = /^(\d{4}-\d{2}-\d{2})/.exec(s);
   if (m) return m[1];
   var low = s.toLowerCase();
-  if (low.indexOf('сегодня') >= 0 || low.indexOf('час') >= 0 || low.indexOf('минут') >= 0) return mskDate(now);
-  if (low.indexOf('вчера') >= 0) return mskDate(now - 86400000);
+  if (low.indexOf('сегодня') >= 0 || low.indexOf('час') >= 0 || low.indexOf('минут') >= 0) return TODAY;
+  if (low.indexOf('вчера') >= 0) return mskDate(Date.now() - 86400000);
   var n = low.match(/(\d+)\s*(дн|день|дня|сут)/);
   if (low.indexOf('недел') >= 0) {
     var w = low.match(/(\d+)/);
-    return mskDate(now - (w ? +w[1] : 1) * 7 * 86400000);
+    return mskDate(Date.now() - (w ? +w[1] : 1) * 7 * 86400000);
   }
-  if (low.indexOf('месяц') >= 0) return mskDate(now - 30 * 86400000);
-  if (n) return mskDate(now - +n[1] * 86400000);
+  if (low.indexOf('месяц') >= 0) return mskDate(Date.now() - 30 * 86400000);
+  if (n) return mskDate(Date.now() - +n[1] * 86400000);
   return '';
 }
 
@@ -507,7 +484,7 @@ function cardOf(item, est, auth) {
     var im = document.createElement('img');
     im.loading = 'lazy';       // фото грузятся по мере прокрутки, а не все 400 сразу
     im.decoding = 'async';
-    im.alt = item.title || 'фото вещи';
+    im.alt = '';
     im.onerror = function () { im.remove(); thumb.textContent = 'фото не загрузилось'; };
     im.src = item.img;
     thumb.appendChild(im);
@@ -518,9 +495,7 @@ function cardOf(item, est, auth) {
   var d = Math.round(est.discount * 100);
   var badge = document.createElement('div');
   badge.className = 'badge ' + (d >= 35 ? 'good' : d >= 20 ? 'mid' : 'bad');
-  badge.textContent = d > 0 ? '−' + d + '% к рынку'
-    : d < 0 ? '+' + Math.abs(d) + '% к рынку'
-    : '≈ рынок';
+  badge.textContent = (d >= 0 ? '−' : '+') + Math.abs(d) + '% к рынку';
   thumb.appendChild(badge);
 
   if (item._d === TODAY) {
@@ -659,7 +634,7 @@ function matches(x, f, skip, ignoreType) {
   if (it.price < f.pmin || it.price > f.pmax) return false;
   if (f.photoOnly && !it.img) return false;
   if (f.newOnly && it.condition !== 'new') return false;
-  if (f.freshOnly && it._d !== TODAY) return false;
+  if (f.freshOnly && it.date !== TODAY) return false;
   if (f.goodOnly && Math.round(x.est.discount * 100) < 35) return false;
   if (f.hideSeen && SEEN.has(it.id)) return false;
   var lbl = authLabelOf(it, x.auth);
@@ -679,8 +654,6 @@ function optionsFor(key, f, skip) {
   SCORED.forEach(function (x) {
     if (!matches(x, f, skip)) return;
     var v = x.item[key];
-    // «без бренда» уже есть отдельным чипом — в списке брендов не дублируем
-    if (key === 'brand' && v === NO_BRAND) return;
     if (v) counts.set(v, (counts.get(v) || 0) + 1);
   });
   return counts;
@@ -720,9 +693,7 @@ function rescore() {
   // бренд не указан — пишем это словами, а не «NoName»
   DATA.items.forEach(function (it) {
     if (!it.brand || it.brand === 'NoName') it.brand = NO_BRAND;
-    // относительные даты считаем от момента сбора каталога
-    var base = Date.parse(DATA.updated);
-    it._d = parseItemDate(it.date, isNaN(base) ? Date.now() : base);
+    it._d = parseItemDate(it.date); // дата в одном формате: для «сегодня» и сортировки
   });
   MODEL = buildModel(DATA.items);
   SCORED = DATA.items.map(function (it) {
@@ -805,19 +776,6 @@ function isDirty() {
     $('freshOnly').checked || $('hideFake').checked || $('hideSeen').checked || stateType !== 'all');
 }
 
-// сколько фильтров сейчас включено — показываем на кнопке в мобильной шапке
-function activeFilterCount() {
-  var n = 0;
-  if ($('q').value.trim()) n++;
-  ['cityFilter', 'cat', 'brand', 'size'].forEach(function (id) { if ($(id).value) n++; });
-  if ($('sort').value !== 'discount') n++;
-  if ($('pmin').value !== '1000' || $('pmax').value !== '20000') n++;
-  if (!$('photoOnly').checked) n++;
-  ['newOnly', 'goodOnly', 'freshOnly', 'hideFake', 'hideSeen'].forEach(function (id) { if ($(id).checked) n++; });
-  if (stateType !== 'all') n++;
-  return n;
-}
-
 function resetFilters() {
   $('q').value = '';
   $('cat').value = ''; $('brand').value = ''; $('size').value = ''; $('cityFilter').value = '';
@@ -879,13 +837,9 @@ function apply(keepShown) {
     (noBrand && stateType !== 'nobrand' ? '<span class="pill">без бренда <b>' + noBrand + '</b></span>' : '') +
     '<span class="pill pill-hide-sm" title="медиана цен всех объявлений каталога — общий ориентир, а не оценка этой вещи">' +
     'медиана каталога <b>' + fmt(Math.round(MODEL ? MODEL.allMedian : 0)) + '</b></span>' +
-    (aiChecked ? '<span class="pill pill-ai pill-hide-sm" title="из объявлений, попавших в текущий фильтр">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
+    (aiChecked ? '<span class="pill pill-ai pill-hide-sm">ИИ проверил <b>' + aiChecked + '</b></span>' : '');
   $('empty').hidden = list.length > 0;
   $('resetBtn').hidden = !isDirty();
-  var nf = activeFilterCount();
-  $('filtersBtn').textContent = nf ? 'Фильтры · ' + nf : 'Фильтры';
-  $('filtersBtn').classList.toggle('active', nf > 0);
-  $('applyFiltersBtn').textContent = list.length ? 'Показать · ' + list.length : 'Ничего не найдено';
   saveFilters();
 }
 
@@ -911,19 +865,12 @@ function updateHeader() {
   var dt = new Date(DATA.updated);
   var when = isNaN(dt) ? String(DATA.updated || '')
                        : dt.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }) + ' МСК';
-  var stale = !isNaN(dt) && (Date.now() - dt.getTime()) > 8 * 3600000;
-  $('updated').textContent = 'обновлено: ' + when + ' · ' + DATA.items.length + ' объявлений' +
-    (stale ? ' · данные устарели' : '');
-  $('updated').classList.toggle('stale', stale);
-  $('updated').title = stale ? 'Каталог давно не обновлялся — проверь, идёт ли обновление на ПК' : '';
+  $('updated').textContent = 'обновлено: ' + when + ' · ' + DATA.items.length + ' объявлений';
 }
 
 /* ---------- окно «почему такой вердикт» ---------- */
 
-var lastFocus = null;
-
 function openAuth(item, auth) {
-  lastFocus = document.activeElement;
   var lbl = authLabelOf(item, auth);
   var ai = item.ai;
   var body = $('modalBody');
@@ -936,9 +883,7 @@ function openAuth(item, auth) {
 
   var sub = document.createElement('div');
   sub.className = 'modal-sub';
-  var subParts = [item.brand, fmt(item.price), item.city].filter(Boolean);
-  if (item.brand_source === 'ai') subParts.push('бренд определён ИИ по фото');
-  sub.textContent = subParts.join(' · ');
+  sub.textContent = [item.brand, fmt(item.price), item.city].filter(Boolean).join(' · ');
   body.appendChild(sub);
 
   var v = document.createElement('div');
@@ -987,20 +932,9 @@ function openAuth(item, auth) {
     body.appendChild(rf);
   }
 
-  if (item.url) {
-    var link = document.createElement('a');
-    link.className = 'modal-link';
-    link.href = item.url;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    link.textContent = 'Открыть объявление на Авито →';
-    link.addEventListener('click', function () { markSeen(item.id); });
-    body.appendChild(link);
-  }
-
   var note = document.createElement('div');
   note.className = 'note';
-  note.textContent = 'Оценка автоматическая и может ошибаться. Авито — вторичный рынок: вещи здесь чаще всего ношены, поэтому низкая цена сама по себе не признак подделки.';
+  note.textContent = 'Оценка автоматическая и может ошибаться. Самый сильный признак — цена: оригинал дорогого бренда за пару тысяч рублей не продают.';
   body.appendChild(note);
 
   $('modal').hidden = false;
@@ -1010,13 +944,10 @@ function openAuth(item, auth) {
 function closeModal() {
   if ($('modal').hidden) return;
   $('modal').hidden = true;
-  if (lastFocus && typeof lastFocus.focus === 'function' && document.contains(lastFocus)) lastFocus.focus();
-  lastFocus = null;
 }
 
 function openFilters() {
   $('filters').classList.add('open');
-  $('filtersBtn').setAttribute('aria-expanded', 'true');
   if (window.matchMedia('(max-width:700px)').matches) document.body.classList.add('locked');
 }
 
@@ -1026,11 +957,8 @@ function openFiltersIfNeeded() {
 }
 
 function closeFilters() {
-  var wasOpen = $('filters').classList.contains('open');
   $('filters').classList.remove('open');
-  $('filtersBtn').setAttribute('aria-expanded', 'false');
   document.body.classList.remove('locked');
-  if (wasOpen) $('filtersBtn').focus({ preventScroll: true });
 }
 
 function init() {
@@ -1048,7 +976,6 @@ function init() {
 
   $('filtersBtn').addEventListener('click', openFilters);
   $('filtersClose').addEventListener('click', closeFilters);
-  $('applyFiltersBtn').addEventListener('click', closeFilters);
   $('resetBtn').addEventListener('click', resetFilters);
   $('emptyReset').addEventListener('click', resetFilters);
   $('more').addEventListener('click', renderChunk);
@@ -1074,7 +1001,7 @@ function init() {
   });
 
   document.addEventListener('keydown', function (e) {
-    if (e.key === '/' && $('modal').hidden && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) {
+    if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) {
       e.preventDefault();
       openFiltersIfNeeded();
       $('q').focus();
@@ -1118,17 +1045,6 @@ function init() {
 var REFRESH_EVERY = 120000; // раз в 2 минуты
 var pulling = false;
 
-// отпечаток каталога: кроме времени и числа объявлений учитываем вердикты ИИ,
-// иначе страница не заметит, что ИИ доработал старые объявления
-function stampOf(d) {
-  var ai = 0, aiBrand = 0;
-  (d.items || []).forEach(function (it) {
-    if (it.ai) ai++;
-    if (it.brand_source === 'ai') aiBrand++;
-  });
-  return [d.updated, (d.items || []).length, ai, aiBrand].join('|');
-}
-
 function pullFresh() {
   if (pulling || typeof fetch !== 'function' || location.protocol === 'file:') return;
   pulling = true;
@@ -1136,7 +1052,8 @@ function pullFresh() {
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (fresh) {
       if (!fresh || !fresh.items || !fresh.items.length) return;
-      if (stampOf(fresh) === stampOf(DATA)) return;
+      // обновление каталога определяем и по времени, и по числу объявлений
+      if (String(fresh.updated) === String(DATA.updated) && fresh.items.length === DATA.items.length) return;
       DATA = fresh;
       rescore();
       updateHeader();
